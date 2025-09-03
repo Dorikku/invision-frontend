@@ -218,3 +218,27 @@
     @apply bg-background text-foreground;
   }
 } */
+/* For Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px; /* slim width */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* can be a subtle color */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 100, 100, 0.7);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 100, 100, 0.5) transparent;
+}

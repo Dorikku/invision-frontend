@@ -230,10 +230,10 @@ export default function PurchaseOrdersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Purchase Orders</CardTitle>
+          {/* <CardTitle>All Purchase Orders</CardTitle>
           <CardDescription>
             A list of all your purchase orders and their current status.
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
         <CardContent>
           <DataTable
