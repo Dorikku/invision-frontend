@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
+import { ScrollArea } from './components/ui/scroll-area';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { initializeSampleData } from './lib/storage';
@@ -29,9 +30,9 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
-          <div className="flex h-screen bg-gray-100">
+          <div className="flex h-screen bg-gray-50">
             <Sidebar />
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <ScrollArea className="flex flex-1 flex-col overflow-hidden">
               <Header />
               <main className="flex-1 overflow-auto p-6">
                 <Routes>
@@ -47,7 +48,7 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
-            </div>
+            </ScrollArea>
           </div>
         </BrowserRouter>
       </TooltipProvider>

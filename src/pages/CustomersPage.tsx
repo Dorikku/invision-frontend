@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Search, Filter, AlertTriangle } from 'lucide-react';
+// import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Mock customer data
 const customers = [
@@ -249,7 +251,7 @@ const getCustomerStatusVariant = (status: string) => {
     case 'premium':
       return 'default';
     case 'regular':
-      return 'default';
+      return 'primary';
     case 'new customer':
       return 'success';
     default:
@@ -275,254 +277,269 @@ const CustomersPage = () => {
   const customerOrderHistory = orderHistory.filter(order => order.customerId === selectedCustomer?.id);
 
   return (
-    <div className="flex h-screen ">
-      
-      {/* Left Panel - Customer List */}
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col rounded-lg ">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          {/* <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-gray-800">All customers</h1>
-            <div className="flex items-center gap-2">
-              <Button size="sm" className="gap-1">
-                <Plus className="h-4 w-4" />
-                Add Customer
-              </Button>
-              <Button variant="ghost" size="sm">
+    <ScrollArea>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
+          <p className="text-muted-foreground">
+            Manage your customer database
+          </p>
+        </div>
+        <Button >
+          <Plus className="mr-2 h-4 w-4" />
+          New Customer
+        </Button>
+      </div>
+
+      <div className="flex h-screen ">
+        
+        {/* Left Panel - Customer List */}
+        <ScrollArea className="w-1/3 bg-white border-r border-gray-200 flex flex-col rounded-lg mt-5">
+          {/* Header */}
+          <div className="p-4 border-b border-gray-200">
+            {/* <div className="flex items-center justify-between mb-4">
+              <h1 className="text-xl font-semibold text-gray-800">All customers</h1>
+              <div className="flex items-center gap-2">
+                <Button size="sm" className="gap-1">
+                  <Plus className="h-4 w-4" />
+                  Add Customer
+                </Button>
+                <Button variant="ghost" size="sm">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </div>
+            </div> */}
+            
+            {/* Search */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search customers"
+                  className="pl-9 w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button variant="ghost" size="sm" className="ml-2">
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
-          </div> */}
-          
-          {/* Search */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search customers"
-                className="pl-9 w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button variant="ghost" size="sm" className="ml-2">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </div>
 
 
-          {/* Filter Legend */}
-          <div className="flex items-center mt-3 text-sm">
-            <div className="flex items-center mr-4">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-              <span className="text-gray-600">New Customer</span>
-            </div>
-            <div className="flex items-center mr-4">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-              <span className="text-gray-600">Regular</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
-              <span className="text-gray-600">Premium</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Customer List */}
-        <div className="flex-1 overflow-y-auto">
-          {filteredCustomers.map((customer) => (
-            <div
-              key={customer.id}
-              onClick={() => setSelectedCustomer(customer)}
-              className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                selectedCustomer?.id === customer.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-              }`}
-            >
+            {/* Filter Legend */}
+            <div className="flex items-center mt-3 text-sm">
+              <div className="flex items-center mr-4">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                <span className="text-gray-600">New Customer</span>
+              </div>
+              <div className="flex items-center mr-4">
+                <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                <span className="text-gray-600">Regular</span>
+              </div>
               <div className="flex items-center">
-                <img
-                  src={customer.avatar}
-                  alt={customer.name}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-900">{customer.name}</h3>
-                    <span className="text-sm text-gray-500">{customer.joinDate}</span>
-                  </div>
-                  <p className="text-sm text-gray-600">{customer.email}</p>
-                  <div className="flex items-center mt-1">
-                    <div className={`w-2 h-2 rounded-full mr-2 ${
-                      customer.status === 'New Customer' ? 'bg-green-400' :
-                      customer.status === 'Regular' ? 'bg-blue-400' : 'bg-purple-400'
-                    }`}></div>
+                <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                <span className="text-gray-600">Premium</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer List */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredCustomers.map((customer) => (
+              <div
+                key={customer.id}
+                onClick={() => setSelectedCustomer(customer)}
+                className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                  selectedCustomer?.id === customer.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                }`}
+              >
+                <div className="flex items-center">
+                  <img
+                    src={customer.avatar}
+                    alt={customer.name}
+                    className="w-10 h-10 rounded-full mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium text-gray-900">{customer.name}</h3>
+                      <span className="text-sm text-gray-500">{customer.joinDate}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">{customer.email}</p>
+                    <div className="flex items-center mt-1">
+                      <div className={`w-2 h-2 rounded-full mr-2 ${
+                        customer.status === 'New Customer' ? 'bg-green-400' :
+                        customer.status === 'Regular' ? 'bg-blue-400' : 'bg-purple-400'
+                      }`}></div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      
+            ))}
+          </div>
+        </ScrollArea>
+        
+        
 
-      {/* Right Panel - Customer Details */}
-      <div className="flex-1 overflow-y-auto">
-        {selectedCustomer ? (
-          <div className="p-6">
-            {/* Customer Header */}
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center">
-                    <img
-                      src={selectedCustomer.avatar}
-                      alt={selectedCustomer.name}
-                      className="w-16 h-16 rounded-full mr-4"
-                    />
+        {/* Right Panel - Customer Details */}
+        <ScrollArea className="flex-1 overflow-y-auto">
+          {selectedCustomer ? (
+            <div className="p-6">
+              {/* Customer Header */}
+              <Card className="mb-6">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center">
+                      <img
+                        src={selectedCustomer.avatar}
+                        alt={selectedCustomer.name}
+                        className="w-16 h-16 rounded-full mr-4"
+                      />
+                      <div>
+                        <h1 className="text-2xl font-semibold text-gray-900">{selectedCustomer.name}</h1>
+                        <p className="text-gray-600">{selectedCustomer.email}</p>
+                        <p className="text-gray-600">{selectedCustomer.phone}</p>
+                      </div>
+                    </div>
+                    <Badge variant={getCustomerStatusVariant(selectedCustomer.status)} >
+                      {selectedCustomer.status}
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
                     <div>
-                      <h1 className="text-2xl font-semibold text-gray-900">{selectedCustomer.name}</h1>
-                      <p className="text-gray-600">{selectedCustomer.email}</p>
-                      <p className="text-gray-600">{selectedCustomer.phone}</p>
+                      <p className="text-sm text-gray-600">Total Orders</p>
+                      <p className="text-xl font-semibold text-gray-900">{selectedCustomer.totalOrders}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Spent</p>
+                      <p className="text-xl font-semibold text-gray-900">₱{selectedCustomer.totalSpent.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Average Order Value</p>
+                      <p className="text-xl font-semibold text-gray-900">₱{selectedCustomer.averageOrderValue.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Customer Since</p>
+                      <p className="text-xl font-semibold text-gray-900">{selectedCustomer.joinDate}</p>
                     </div>
                   </div>
-                  <Badge variant={getCustomerStatusVariant(selectedCustomer.status)}>
-                    {selectedCustomer.status}
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
-                  <div>
-                    <p className="text-sm text-gray-600">Total Orders</p>
-                    <p className="text-xl font-semibold text-gray-900">{selectedCustomer.totalOrders}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Spent</p>
-                    <p className="text-xl font-semibold text-gray-900">₱{selectedCustomer.totalSpent.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Average Order Value</p>
-                    <p className="text-xl font-semibold text-gray-900">₱{selectedCustomer.averageOrderValue.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Customer Since</p>
-                    <p className="text-xl font-semibold text-gray-900">{selectedCustomer.joinDate}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Notification for unpaid invoices */}
-            {selectedCustomer.hasUnpaidInvoices && (
-              <Alert className="mb-6" >
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  This customer has unpaid invoices.
-                </AlertDescription>
-              </Alert>
-            )}
+              {/* Notification for unpaid invoices */}
+              {selectedCustomer.hasUnpaidInvoices && (
+                <Alert className="mb-6" variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className='font-medium'>
+                    This customer has unpaid invoices.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-            {/* Active Orders Section */}
-            <Card className="mb-6">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle className="text-lg font-semibold">Active Orders</CardTitle>
-                <Button variant="ghost" size="sm">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO#</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Sales</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {customerActiveOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3">
-                            <Badge variant={getStatusVariant(order.status)}>
-                              {order.status}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{order.poNumber}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">{order.date}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900">₱{order.total.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                      {customerActiveOrders.length === 0 && (
+              {/* Active Orders Section */}
+              <Card className="mb-6">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle className="text-lg font-semibold">Active Orders</CardTitle>
+                  <Button variant="ghost" size="sm">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
                         <tr>
-                          <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                            No active orders for this customer
-                          </td>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PO#</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Sales</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Order History Section */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle className="text-lg font-semibold">Order History</CardTitle>
-                <Button variant="ghost" size="sm">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Item</th>
-                        <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Quantity</th>
-                        <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Unit Price</th>
-                        <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Total Sales</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {customerOrderHistory.map((order) => (
-                        <React.Fragment key={order.id}>
-                          <tr className="bg-gray-50">
-                            <td colSpan={4} className="px-2 py-2 text-sm font-medium text-gray-700">
-                              Order {order.id} - {order.date}
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {customerActiveOrders.map((order) => (
+                          <tr key={order.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              <Badge variant={getStatusVariant(order.status)}>
+                                {order.status}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{order.poNumber}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{order.date}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900">₱{order.total.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                        {customerActiveOrders.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                              No active orders for this customer
                             </td>
                           </tr>
-                          {order.items.map((item, index) => (
-                            <tr key={`${order.id}-${index}`} className="border-b border-gray-100">
-                              <td className="px-2 py-2 text-sm text-gray-900">{item.name}</td>
-                              <td className="px-2 py-2 text-sm text-gray-900">{item.quantity}</td>
-                              <td className="px-2 py-2 text-sm text-gray-900">₱{item.price.toLocaleString()}</td>
-                              <td className="px-2 py-2 text-sm text-gray-900">₱{item.subtotal.toLocaleString()}</td>
-                            </tr>
-                          ))}
-                        </React.Fragment>
-                      ))}
-                      {customerOrderHistory.length === 0 && (
-                        <tr>
-                          <td colSpan={4} className="px-2 py-8 text-center text-gray-500">
-                            No order history for this customer
-                          </td>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Order History Section */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                  <CardTitle className="text-lg font-semibold">Order History</CardTitle>
+                  <Button variant="ghost" size="sm">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Item</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Quantity</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Unit Price</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Total Sales</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">Select a customer to view details</p>
-          </div>
-        )}
+                      </thead>
+                      <tbody>
+                        {customerOrderHistory.map((order) => (
+                          <React.Fragment key={order.id}>
+                            <tr className="bg-gray-50">
+                              <td colSpan={4} className="px-2 py-2 text-sm font-medium text-gray-700">
+                                Order {order.id} - {order.date}
+                              </td>
+                            </tr>
+                            {order.items.map((item, index) => (
+                              <tr key={`${order.id}-${index}`} className="border-b border-gray-100">
+                                <td className="px-2 py-2 text-sm text-gray-900">{item.name}</td>
+                                <td className="px-2 py-2 text-sm text-gray-900">{item.quantity}</td>
+                                <td className="px-2 py-2 text-sm text-gray-900">₱{item.price.toLocaleString()}</td>
+                                <td className="px-2 py-2 text-sm text-gray-900">₱{item.subtotal.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        ))}
+                        {customerOrderHistory.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-2 py-8 text-center text-gray-500">
+                              No order history for this customer
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Select a customer to view details</p>
+            </div>
+          )}
+        </ScrollArea>
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 
