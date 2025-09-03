@@ -16,12 +16,24 @@ interface SalesOrderFormProps {
   onCancel: () => void;
 }
 
+interface FormLineItem {
+  tempId: string; // Temporary ID for frontend tracking
+  productId: string;
+  productName: string;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  unitPrice: number;
+  total: number;
+  taxRate: number;
+}
+
 export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOrderFormProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [formData, setFormData] = useState({
-    salesPersonId: salesOrder?.salesPersonId || '',
+    salesPersonId: salesOrder?.salesPersonId || '1', // Default to sales person ID 1
     customerId: salesOrder?.customerId || '',
     date: salesOrder?.date || new Date().toISOString().split('T')[0],
     invoiceStatus: salesOrder?.invoiceStatus || 'not_invoiced' as const,
@@ -29,10 +41,28 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
     shipmentStatus: salesOrder?.shipmentStatus || 'not_shipped' as const,
     notes: salesOrder?.notes || '',
   });
-  const [items, setItems] = useState<LineItem[]>(salesOrder?.items || []);
+  const [items, setItems] = useState<FormLineItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Convert existing sales order items to form format
+  useEffect(() => {
+    if (salesOrder?.items) {
+      const formItems: FormLineItem[] = salesOrder.items.map(item => ({
+        tempId: item.id, // Use existing ID as temp ID for editing
+        productId: item.productId,
+        productName: item.productName,
+        description: item.description || '',
+        quantity: item.quantity,
+        unitCost: item.unitCost,
+        unitPrice: item.unitPrice,
+        total: item.total,
+        taxRate: item.taxRate,
+      }));
+      setItems(formItems);
+    }
+  }, [salesOrder]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,7 +103,6 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
   }, []);
 
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
-  const selectedSalesPerson = salesPersons.find(s => s.id === formData.salesPersonId);
 
   const productOptions = products.map(product => ({
     value: product.id,
@@ -81,14 +110,9 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
     description: `₱${product.selling_price.toFixed(2)} - ${product.description || ''}`
   }));
 
-  const salesPersonOptions = salesPersons.map(salesPerson => ({
-    value: salesPerson.id,
-    label: salesPerson.name,
-  }));
-
   const addItem = () => {
-    const newItem: LineItem = {
-      id: Date.now().toString(),
+    const newItem: FormLineItem = {
+      tempId: Date.now().toString(), // Temporary ID for frontend tracking
       productId: '',
       productName: '',
       description: '',
@@ -97,12 +121,11 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
       unitPrice: 0,
       total: 0,
       taxRate: 0,
-      shippedQuantity: 0,
     };
     setItems([...items, newItem]);
   };
 
-  const updateItem = (index: number, field: keyof LineItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof FormLineItem, value: string | number) => {
     const updatedItems = [...items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
 
@@ -116,6 +139,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
       }
     }
 
+    // Recalculate total when quantity, unitPrice, or taxRate changes
     if (field === 'quantity' || field === 'unitPrice' || field === 'productId' || field === 'taxRate') {
       const subtotal = updatedItems[index].quantity * updatedItems[index].unitPrice;
       updatedItems[index].total = subtotal;
@@ -130,7 +154,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
 
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-    const tax = items.reduce((sum, item) => sum + ((item.quantity * item.unitPrice) * (item.taxRate / 100)), 0);
+    const tax = items.reduce((sum, item) => sum + (item.total * item.taxRate), 0);
     const total = subtotal + tax;
     return { subtotal, tax, total };
   };
@@ -143,6 +167,11 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
       return;
     }
 
+    if (!formData.salesPersonId) {
+      alert('Please select a sales person.');
+      return;
+    }
+
     // Validate that all items have products selected
     const hasEmptyProducts = items.some(item => !item.productId);
     if (hasEmptyProducts) {
@@ -152,42 +181,32 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
 
     setSaving(true);
     try {
-      const { subtotal, tax, total } = calculateTotals();
-
-      const salesOrderData = {
-        customerId: formData.customerId,
-        quotationId: null, // Set this if creating from quotation
+      // Prepare request data in the format expected by the API
+      const requestData = {
+        customer_id: parseInt(formData.customerId),
+        sales_person_id: parseInt(formData.salesPersonId),
         date: formData.date,
-        salesPersonId: formData.salesPersonId,
-        items: items.map(item => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.productName,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-          taxRate: item.taxRate,
-          shippedQuantity: item.shippedQuantity
-        })),
-        subtotal,
-        tax,
-        total,
-        invoiceStatus: formData.invoiceStatus,
-        paymentStatus: formData.paymentStatus,
-        shipmentStatus: formData.shipmentStatus,
+        invoice_status: formData.invoiceStatus,
+        payment_status: formData.paymentStatus,
+        shipment_status: formData.shipmentStatus,
         notes: formData.notes,
+        items: items.map(item => ({
+          product_id: parseInt(item.productId),
+          quantity: item.quantity,
+          price: item.unitPrice, // API expects 'price', not 'unitPrice'
+          tax_rate: item.taxRate, // API expects 'tax_rate', not 'taxRate'
+        }))
       };
 
       let response;
       if (salesOrder) {
-        // Update existing sales order
+        // Update existing sales order (you'll need to implement PUT endpoint)
         response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${salesOrder.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(salesOrderData),
+          body: JSON.stringify(requestData),
         });
       } else {
         // Create new sales order
@@ -196,7 +215,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(salesOrderData),
+          body: JSON.stringify(requestData),
         });
       }
 
@@ -314,7 +333,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
               </TableHeader>
               <TableBody>
                 {items.map((item, index) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.tempId}>
                     <TableCell>
                       <Combobox
                         options={productOptions}
@@ -359,9 +378,9 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                           type="number"
                           min="0"
                           step="0.01"
-                          value={item.taxRate}
+                          value={item.taxRate * 100}
                           onChange={(e) =>
-                            updateItem(index, 'taxRate', parseFloat(e.target.value) || 0)
+                            updateItem(index, 'taxRate', parseFloat(e.target.value) / 100 || 0)
                           }
                           className="pr-6"
                         />

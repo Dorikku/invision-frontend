@@ -83,6 +83,7 @@ export default function SalesOrdersPage() {
       // Create a copy of the sales order without the ID and with new dates
       const duplicateData = {
         customerId: salesOrder.customerId,
+        salesPersonId: salesOrder.salesPersonId,
         quotationId: salesOrder.quotationId,
         date: new Date().toISOString().split('T')[0],
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -91,6 +92,7 @@ export default function SalesOrdersPage() {
           productName: item.productName,
           description: item.description,
           quantity: item.quantity,
+          unitCost: item.unitCost,
           unitPrice: item.unitPrice,
           total: item.total,
           taxRate: item.taxRate,
@@ -98,7 +100,7 @@ export default function SalesOrdersPage() {
         })),
         subtotal: salesOrder.subtotal,
         tax: salesOrder.tax,
-        taxRate: salesOrder.taxRate,
+        // taxRate: salesOrder.taxRate,
         total: salesOrder.total,
         invoiceStatus: 'not_invoiced' as const,
         paymentStatus: 'unpaid' as const,
@@ -398,10 +400,10 @@ export default function SalesOrdersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Sales Orders</CardTitle>
+          {/* <CardTitle>All Sales Orders</CardTitle>
           <CardDescription>
             A list of all your sales orders and their current status.
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
         <CardContent>
           <DataTable
@@ -415,7 +417,7 @@ export default function SalesOrdersPage() {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingSalesOrder ? 'Edit Sales Order' : 'Create New Sales Order'}
