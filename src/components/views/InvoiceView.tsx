@@ -15,9 +15,9 @@ interface InvoiceViewProps {
 export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewProps) {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'draft': return 'secondary';
-      case 'sent': return 'outline';
-      case 'paid': return 'default';
+      case 'unpaid': return 'secondary';
+      case 'partial': return 'outline';
+      case 'paid': return 'success';
       case 'overdue': return 'destructive';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
@@ -70,10 +70,10 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
               <span className="font-medium">Due Date:</span>
               <span className="ml-2">{new Date(invoice.dueDate).toLocaleDateString()}</span>
             </div>
-            <div>
+            {/* <div>
               <span className="font-medium">Payment Terms:</span>
               <span className="ml-2">{invoice.paymentTerms}</span>
-            </div>
+            </div> */}
             <div>
               <span className="font-medium">Status:</span>
               <Badge variant={getStatusBadgeVariant(invoice.status)} className="ml-2">
@@ -130,8 +130,8 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
                     </div>
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell className="text-right font-medium">${item.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">₱{item.unitPrice.toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-medium">₱{item.total.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -143,16 +143,16 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
             <div className="w-64 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${invoice.subtotal.toFixed(2)}</span>
+                <span>₱{invoice.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax ({invoice.taxRate}%):</span>
-                <span>${invoice.tax.toFixed(2)}</span>
+                <span>Tax:</span>
+                <span>₱{invoice.tax.toFixed(2)}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>${invoice.total.toFixed(2)}</span>
+                <span>₱{invoice.total.toFixed(2)}</span>
               </div>
             </div>
           </div>

@@ -15,10 +15,12 @@ import InvoiceView from '../components/views/InvoiceView';
 // Mock API functions
 const fetchInvoices = async (): Promise<Invoice[]> => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // await new Promise(resolve => setTimeout(resolve, 500));
   
-  // In a real application, this would be:
-  const response = await fetch('http://127.0.0.1:8000/invoices');
+  const response = await fetch('http://127.0.0.1:8000/api/v1/invoices');
+  if (!response.ok) {
+    throw new Error('Failed to fetch invoices');
+  }
   return response.json();
 
   // console.log('Fetched invoices:', dummyInvoices);
@@ -115,8 +117,8 @@ export default function InvoicesPage() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      draft: 'secondary',
-      sent: 'default',
+      unpaid: 'secondary',
+      partial: 'default',
       paid: 'success',
       overdue: 'destructive',
       cancelled: 'outline',
@@ -156,7 +158,7 @@ export default function InvoicesPage() {
       key: 'total',
       label: 'Total',
       sortable: true,
-      render: (value: number) => `$${value.toLocaleString()}`,
+      render: (value: number) => `₱${value.toLocaleString()}`,
     },
     {
       key: 'status',
@@ -169,8 +171,10 @@ export default function InvoicesPage() {
   const getActionItems = (invoice: Invoice) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
-          Actions
+        <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+          </svg>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -269,13 +273,7 @@ export default function InvoicesPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Invoices</CardTitle>
-          <CardDescription>
-            A list of all your invoices and their payment status.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-5">
           <DataTable
             data={invoices}
             columns={columns}
