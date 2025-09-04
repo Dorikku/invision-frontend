@@ -219,13 +219,13 @@
   }
 } */
 /* For Chrome, Edge, Safari */
-/* ::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 8px; 
-} */
-
-::-webkit-scrollbar-track {
-  background: transparent; 
 }
+
+/* ::-webkit-scrollbar-track {
+  background: transparent; 
+} */
 
 /* ::-webkit-scrollbar-thumb {
   background-color: rgba(100, 100, 100, 0.5);

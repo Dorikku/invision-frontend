@@ -278,7 +278,7 @@ const CustomersPage = () => {
 
   return (
     <ScrollArea>
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
           <p className="text-muted-foreground">
@@ -289,26 +289,23 @@ const CustomersPage = () => {
           <Plus className="mr-2 h-4 w-4" />
           New Customer
         </Button>
-      </div>
+      </div> */}
 
       <div className="flex h-screen ">
         
         {/* Left Panel - Customer List */}
-        <ScrollArea className="w-1/3 bg-white border-r border-gray-200 flex flex-col rounded-lg mt-5">
+        <ScrollArea className="w-1/3 bg-white border-r border-gray-200 flex flex-col rounded-lg">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
-            {/* <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-semibold text-gray-800">All customers</h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-semibold text-gray-800">Customers</h1>
               <div className="flex items-center gap-2">
                 <Button size="sm" className="gap-1">
                   <Plus className="h-4 w-4" />
                   Add Customer
                 </Button>
-                <Button variant="ghost" size="sm">
-                  <Filter className="h-4 w-4" />
-                </Button>
               </div>
-            </div> */}
+            </div>
             
             {/* Search */}
             <div className="flex items-center justify-between mb-4">
@@ -321,7 +318,7 @@ const CustomersPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="ghost" size="sm" className="ml-2">
+              <Button variant="ghost" size="sm" className="ml-2 text-gray-400">
                 <Filter className="h-4 w-4" />
               </Button>
             </div>
@@ -424,6 +421,13 @@ const CustomersPage = () => {
                       <p className="text-xl font-semibold text-gray-900">{selectedCustomer.joinDate}</p>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200">
+                    <div>
+                      <p className="text-sm text-gray-600">Address</p>
+                      <p className="text-sm text-gray-900">{selectedCustomer.address}</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -431,7 +435,7 @@ const CustomersPage = () => {
               {selectedCustomer.hasUnpaidInvoices && (
                 <Alert className="mb-6" variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className='font-medium'>
+                  <AlertDescription>
                     This customer has unpaid invoices.
                   </AlertDescription>
                 </Alert>
@@ -441,7 +445,7 @@ const CustomersPage = () => {
               <Card className="mb-6">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <CardTitle className="text-lg font-semibold">Active Orders</CardTitle>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="text-gray-400">
                     <Filter className="h-4 w-4" />
                   </Button>
                 </CardHeader>
@@ -486,7 +490,7 @@ const CustomersPage = () => {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                   <CardTitle className="text-lg font-semibold">Order History</CardTitle>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="text-gray-400">
                     <Filter className="h-4 w-4" />
                   </Button>
                 </CardHeader>
