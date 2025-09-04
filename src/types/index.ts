@@ -97,7 +97,7 @@ export interface SalesOrder extends Record<string, unknown> {
 export interface Invoice extends Record<string, unknown> {
   id: string;
   invoiceNumber: string;
-  salesOrderId?: string;
+  salesOrderId?: number;
   customerId: string;
   customerName: string;
   customerEmail: string;
@@ -107,10 +107,8 @@ export interface Invoice extends Record<string, unknown> {
   items: LineItem[];
   subtotal: number;
   tax: number;
-  taxRate: number;
   total: number;
   status: 'draft' | 'sent' | 'paid' | 'partially_paid' | 'overdue' | 'cancelled';
-  paymentTerms: string;
   paidAmount: number;
   notes: string;
   createdAt: string;
