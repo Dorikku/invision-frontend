@@ -45,6 +45,8 @@ export default function SalesOrdersPage() {
   const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
   const [shipmentSalesOrder, setShipmentSalesOrder] = useState<SalesOrder | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [salesOrderToDelete, setSalesOrderToDelete] = useState<SalesOrder | null>(null);
 
   useEffect(() => {
     loadSalesOrders();
@@ -130,15 +132,22 @@ export default function SalesOrdersPage() {
   };
 
   const handleDeleteSalesOrder = async (salesOrder: SalesOrder) => {
-    if (window.confirm('Are you sure you want to delete this sales order?')) {
-      try {
-        await deleteSalesOrder(salesOrder.id);
-        await loadSalesOrders();
-        toast.success('Sales order deleted successfully');
-      } catch (error) {
-        console.error('Error deleting sales order:', error);
-        toast.error('Failed to delete sales order');
-      }
+    setSalesOrderToDelete(salesOrder);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteSalesOrder = async () => {
+    if (!salesOrderToDelete) return;
+    try {
+      await deleteSalesOrder(salesOrderToDelete.id);
+      await loadSalesOrders();
+      toast.success("Sales order deleted successfully");
+    } catch (error) {
+      console.error("Error deleting sales order:", error);
+      toast.error("Failed to delete sales order");
+    } finally {
+      setDeleteDialogOpen(false);
+      setSalesOrderToDelete(null);
     }
   };
 
@@ -399,13 +408,7 @@ export default function SalesOrdersPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          {/* <CardTitle>All Sales Orders</CardTitle>
-          <CardDescription>
-            A list of all your sales orders and their current status.
-          </CardDescription> */}
-        </CardHeader>
-        <CardContent>
+        <CardContent className='pt-5'>
           <DataTable
             data={salesOrders}
             columns={columns}
@@ -454,6 +457,30 @@ export default function SalesOrdersPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sales Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {salesOrderToDelete?.orderNumber}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteSalesOrder}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       {invoiceSalesOrder && (
         <CreateInvoiceDialog
