@@ -140,7 +140,7 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
       so.id === salesOrder.id
         ? {
             ...so,
-            paymentStatus: allInvoicesPaid ? 'paid' : 'partially_paid' as const, // Explicitly cast to literal type
+            paymentStatus: allInvoicesPaid ? 'paid' : 'partial' as const, // Explicitly cast to literal type
             updatedAt: new Date().toISOString(),
           }
         : so

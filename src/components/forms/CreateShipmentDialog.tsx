@@ -7,10 +7,8 @@ import { Textarea } from '../ui/textarea';
 import { Checkbox } from '../ui/checkbox';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '../ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
-import { getInvoices, getSalesOrders, saveSalesOrders } from '../../lib/storage';
-import type { SalesOrder, Invoice, LineItem } from '../../types';
+import type { SalesOrder, LineItem } from '../../types';
 
 interface CreateShipmentDialogProps {
   open: boolean;
@@ -21,145 +19,159 @@ interface CreateShipmentDialogProps {
 
 type Mode = 'choice' | 'partial';
 
-interface ShipmentItem {
-  lineItem: LineItem;
+interface SelectedItem {
+  original: LineItem;
   selected: boolean;
-  quantityToShip: number;
+  quantity: number;
+  shippedQuantity: number;
+  remainingQuantity: number;
+}
+
+interface ShippedQuantityResponse {
+  soItemId: string;
+  quantity: number;
 }
 
 export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, onShipmentCreated }: CreateShipmentDialogProps) {
   const [mode, setMode] = useState<Mode>('choice');
   const [shipmentDate, setShipmentDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [carrier, setCarrier] = useState<string>('');
-  const [trackingNumber, setTrackingNumber] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('');
-  const [shipmentItems, setShipmentItems] = useState<ShipmentItem[]>([]);
-  const [totalShipped, setTotalShipped] = useState<number>(0);
+  const [tracker, setTracker] = useState<string>('');
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (open) {
-      setMode('choice');
-      setShipmentDate(new Date().toISOString().split('T')[0]);
-      setCarrier('');
-      setTrackingNumber('');
-      setNotes('');
-      setSelectedInvoiceId('');
-      setShipmentItems([]);
-      setTotalShipped(0);
+      setLoading(true);
+      const fetchShippedQuantities = async () => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${salesOrder.id}/shipped-quantities`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch shipped quantities');
+          }
+          const shippedQuantities: ShippedQuantityResponse[] = await response.json();
+          
+          const newSelectedItems = salesOrder.items.map(item => {
+            const shippedQty = shippedQuantities.find(iq => Number(iq.soItemId) === Number(item.id))?.quantity || 0;
+            return {
+              original: item,
+              selected: false,
+              quantity: 0,
+              shippedQuantity: shippedQty,
+              remainingQuantity: item.quantity - shippedQty,
+            };
+          });
+          
+          setSelectedItems(newSelectedItems);
+          setMode('choice');
+          setShipmentDate(new Date().toISOString().split('T')[0]);
+          setCarrier('');
+          setTracker('');
+        } catch (error) {
+          console.error('Error fetching shipped quantities:', error);
+          toast.error('Failed to load shipped quantities');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchShippedQuantities();
     }
-  }, [open]);
-
-  const invoices = getInvoices().filter(
-    (inv) => inv.salesOrderId === salesOrder.id && inv.status !== 'cancelled'
-  );
-
-  const handleInvoiceSelect = (invoiceId: string) => {
-    setSelectedInvoiceId(invoiceId);
-    const selectedInvoice = invoices.find((inv) => inv.id === invoiceId);
-    if (selectedInvoice) {
-      setShipmentItems(
-        selectedInvoice.items.map((item) => ({
-          lineItem: item,
-          selected: false,
-          quantityToShip: 0,
-        }))
-      );
-      setTotalShipped(0);
-    }
-  };
-
-  const calculateRemainingQuantity = (item: LineItem) => {
-    return item.quantity - (item.shippedQuantity || 0);
-  };
-
-  const calculateTotalShipped = (items: ShipmentItem[]) => {
-    const total = items.reduce((sum, item) => (item.selected ? item.quantityToShip : 0), 0);
-    setTotalShipped(total);
-  };
+  }, [open, salesOrder]);
 
   const handleItemSelect = (index: number, selected: boolean) => {
-    const newShipmentItems = [...shipmentItems];
-    newShipmentItems[index].selected = selected;
-    newShipmentItems[index].quantityToShip = selected ? calculateRemainingQuantity(newShipmentItems[index].lineItem) : 0;
-    setShipmentItems(newShipmentItems);
-    calculateTotalShipped(newShipmentItems);
+    const newSelectedItems = [...selectedItems];
+    newSelectedItems[index].selected = selected;
+    newSelectedItems[index].quantity = selected ? newSelectedItems[index].remainingQuantity : 0;
+    setSelectedItems(newSelectedItems);
   };
 
   const handleQuantityChange = (index: number, qty: number) => {
-    const newShipmentItems = [...shipmentItems];
-    const maxQty = calculateRemainingQuantity(newShipmentItems[index].lineItem);
-    newShipmentItems[index].quantityToShip = Math.max(0, Math.min(qty, maxQty));
-    newShipmentItems[index].selected = newShipmentItems[index].quantityToShip > 0;
-    setShipmentItems(newShipmentItems);
-    calculateTotalShipped(newShipmentItems);
+    const newSelectedItems = [...selectedItems];
+    const maxQty = newSelectedItems[index].remainingQuantity;
+    newSelectedItems[index].quantity = Math.max(0, Math.min(qty, maxQty));
+    if (newSelectedItems[index].quantity > 0) {
+      newSelectedItems[index].selected = true;
+    } else {
+      newSelectedItems[index].selected = false;
+    }
+    setSelectedItems(newSelectedItems);
   };
 
-  const handleFullShipment = () => {
-    const allSalesOrders = getSalesOrders();
-    const updatedSalesOrders: SalesOrder[] = allSalesOrders.map((so) => {
-      if (so.id === salesOrder.id) {
-        const updatedItems = so.items.map((item) => ({
-          ...item,
-          shippedQuantity: item.quantity,
-        }));
-        return {
-          ...so,
-          items: updatedItems,
-          shipmentStatus: 'shipped' as const,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return so;
-    });
-    saveSalesOrders(updatedSalesOrders);
-
-    toast.success('All items marked as shipped');
-    onShipmentCreated();
-    onOpenChange(false);
-  };
-
-  const handlePartialShipment = () => {
-    const selectedItems = shipmentItems.filter((item) => item.selected && item.quantityToShip > 0);
-    if (!selectedInvoiceId || selectedItems.length === 0) {
-      toast.error('Please select an invoice and at least one item with a valid quantity to ship.');
+  const createShipment = async (itemsToShip: { soItemId: number; quantity: number }[]) => {
+    if (!carrier.trim()) {
+      toast.error('Carrier is required');
       return;
     }
 
-    const allSalesOrders = getSalesOrders();
-    const updatedSalesOrders: SalesOrder[] = allSalesOrders.map((so) => {
-      if (so.id === salesOrder.id) {
-        const updatedItems = so.items.map((soItem) => {
-          const shipmentItem = shipmentItems.find(
-            (si) => si.lineItem.id === soItem.id && si.selected && si.quantityToShip > 0
-          );
-          if (shipmentItem) {
-            return {
-              ...soItem,
-              shippedQuantity: (soItem.shippedQuantity || 0) + shipmentItem.quantityToShip,
-            };
-          }
-          return soItem;
-        });
+    try {
+      const payload = {
+        salesOrderId: salesOrder.id,
+        date: shipmentDate,
+        carrier,
+        tracker: tracker || null,
+        items: itemsToShip,
+      };
 
-        const allItemsShipped = updatedItems.every((item) => (item.shippedQuantity || 0) >= item.quantity);
-        const newShipmentStatus: SalesOrder['shipmentStatus'] = allItemsShipped ? 'shipped' : 'partially_shipped';
+      const response = await fetch('http://127.0.0.1:8000/api/v1/shipments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-        return {
-          ...so,
-          items: updatedItems,
-          shipmentStatus: newShipmentStatus,
-          updatedAt: new Date().toISOString(),
-        };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create shipment');
       }
-      return so;
-    });
-    saveSalesOrders(updatedSalesOrders);
 
-    toast.success('Partial shipment recorded successfully');
-    onShipmentCreated();
-    onOpenChange(false);
+      toast.success('Shipment created successfully');
+      onShipmentCreated();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating shipment:', error);
+      toast.error((error as Error).message || 'Failed to create shipment');
+    }
   };
+
+  const handleShipAll = () => {
+    const itemsToShip = salesOrder.items.map(item => ({
+      soItemId: parseInt(item.id),
+      quantity: item.quantity - (selectedItems.find(si => si.original.id === item.id)?.shippedQuantity || 0),
+    })).filter(item => item.quantity > 0);
+    createShipment(itemsToShip);
+  };
+
+  const handlePartialSubmit = () => {
+    const selectedCount = selectedItems.filter(si => si.selected && si.quantity > 0).length;
+    if (selectedCount === 0) {
+      toast.error('Please select at least one item to ship.');
+      return;
+    }
+
+    const itemsToShip = selectedItems
+      .filter(si => si.selected && si.quantity > 0)
+      .map(si => ({
+        soItemId: parseInt(si.original.id),
+        quantity: si.quantity,
+      }));
+
+    createShipment(itemsToShip);
+  };
+
+  if (loading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Shipment</DialogTitle>
+            <DialogDescription>Loading shipped quantities...</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (mode === 'choice') {
     return (
@@ -168,13 +180,15 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
           <DialogHeader>
             <DialogTitle>Create Shipment</DialogTitle>
             <DialogDescription>
-              Choose how to create a shipment for sales order {salesOrder.orderNumber}.
+              Choose how you want to create the shipment for sales order {salesOrder.orderNumber}.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
-            <Button onClick={handleFullShipment}>Fully Ship All Items</Button>
+            <Button onClick={handleShipAll}>
+              Ship All Remaining Line-Items
+            </Button>
             <Button onClick={() => setMode('partial')} variant="outline">
-              Enter Quantities
+              Pick and Choose Line-Items and Quantities
             </Button>
           </div>
         </DialogContent>
@@ -188,12 +202,11 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
         <DialogHeader>
           <DialogTitle>Create Partial Shipment</DialogTitle>
           <DialogDescription>
-            Select an invoice and specify quantities to ship for sales order {salesOrder.orderNumber}.
+            Select items and adjust quantities to ship from sales order {salesOrder.orderNumber}.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
-          {/* Shipment Details */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="shipmentDate">Shipment Date</Label>
               <Input
@@ -207,105 +220,65 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
               <Label htmlFor="carrier">Carrier</Label>
               <Input
                 id="carrier"
+                type="text"
                 value={carrier}
                 onChange={(e) => setCarrier(e.target.value)}
-                placeholder="e.g., UPS, FedEx"
               />
             </div>
             <div>
-              <Label htmlFor="trackingNumber">Tracking Number</Label>
+              <Label htmlFor="tracker">Tracking Number (Optional)</Label>
               <Input
-                id="trackingNumber"
-                value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
+                id="tracker"
+                type="text"
+                value={tracker}
+                onChange={(e) => setTracker(e.target.value)}
               />
             </div>
           </div>
 
-          {/* Invoice Selection */}
           <div>
-            <Label htmlFor="invoiceSelect">Select Invoice</Label>
-            <Select value={selectedInvoiceId} onValueChange={handleInvoiceSelect}>
-              <SelectTrigger id="invoiceSelect">
-                <SelectValue placeholder="Select an invoice" />
-              </SelectTrigger>
-              <SelectContent>
-                {invoices.map((invoice) => (
-                  <SelectItem key={invoice.id} value={invoice.id}>
-                    {invoice.invoiceNumber} ({new Date(invoice.date).toLocaleDateString()})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Item Selection */}
-          {selectedInvoiceId && (
-            <div>
-              <Label>Items to Ship</Label>
-              <div className="mt-2 border rounded-md overflow-hidden">
-                <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium text-muted-foreground bg-muted/50">
-                  <div className="col-span-1"></div>
-                  <div className="col-span-3">Product</div>
-                  <div className="col-span-3">Description</div>
-                  <div className="col-span-2">Remaining Quantity</div>
-                  <div className="col-span-3">Quantity to Ship</div>
-                </div>
-                <Separator />
-                {shipmentItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-4 p-4 items-center text-sm">
-                    <div className="col-span-1 flex items-center">
-                      <Checkbox
-                        checked={item.selected}
-                        onCheckedChange={(checked) => handleItemSelect(index, checked as boolean)}
-                      />
-                    </div>
-                    <div className="col-span-3 font-medium">{item.lineItem.productName}</div>
-                    <div className="col-span-3 text-muted-foreground">{item.lineItem.description || '-'}</div>
-                    <div className="col-span-2">{calculateRemainingQuantity(item.lineItem)}</div>
-                    <div className="col-span-3">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={calculateRemainingQuantity(item.lineItem)}
-                        value={item.quantityToShip}
-                        onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 0)}
-                        disabled={!item.selected}
-                        className="w-full"
-                      />
-                    </div>
+            <Label>Items to Ship</Label>
+            <div className="mt-2 border rounded-md overflow-hidden">
+              <div className="grid grid-cols-10 gap-4 p-4 text-sm font-medium text-muted-foreground bg-muted/50">
+                <div className="col-span-1"></div>
+                <div className="col-span-3">Product</div>
+                <div className="col-span-3">Description</div>
+                <div className="col-span-3">Quantity (Remaining)</div>
+              </div>
+              <Separator />
+              {selectedItems.map((si, index) => (
+                <div key={index} className="grid grid-cols-10 gap-4 p-4 items-center text-sm">
+                  <div className="col-span-1 flex items-center">
+                    <Checkbox
+                      checked={si.selected}
+                      onCheckedChange={(checked) => handleItemSelect(index, checked as boolean)}
+                      disabled={si.remainingQuantity === 0}
+                    />
                   </div>
-                ))}
-              </div>
+                  <div className="col-span-3 font-medium">{si.original.productName}</div>
+                  <div className="col-span-3 text-muted-foreground">{si.original.description || '-'}</div>
+                  <div className="col-span-3">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={si.remainingQuantity}
+                      value={si.quantity}
+                      onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 0)}
+                      disabled={!si.selected || si.remainingQuantity === 0}
+                      className="w-full"
+                    />
+                    <span className="text-xs text-muted-foreground ml-2">
+                      (remaining {si.remainingQuantity}, shipped {si.shippedQuantity})
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
           </div>
-
-          {/* Summary */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between font-bold">
-                <span>Total Items to Ship:</span>
-                <span>{totalShipped}</span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
         <DialogFooter className="mt-6">
           <Button variant="outline" onClick={() => setMode('choice')}>Back to Choice</Button>
-          <Button onClick={handlePartialShipment} disabled={!selectedInvoiceId}>
-            Create Shipment
-          </Button>
+          <Button onClick={handlePartialSubmit}>Create Shipment</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
