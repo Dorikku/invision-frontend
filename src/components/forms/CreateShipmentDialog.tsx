@@ -99,10 +99,10 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
   };
 
   const createShipment = async (itemsToShip: { soItemId: number; quantity: number }[]) => {
-    if (!carrier.trim()) {
-      toast.error('Carrier is required');
-      return;
-    }
+    // if (!carrier.trim()) {
+    //   toast.error('Carrier is required');
+    //   return;
+    // }
 
     try {
       const payload = {
@@ -226,7 +226,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
               />
             </div>
             <div>
-              <Label htmlFor="tracker">Tracking Number (Optional)</Label>
+              <Label htmlFor="tracker">Tracking Number</Label>
               <Input
                 id="tracker"
                 type="text"

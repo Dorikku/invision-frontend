@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Copy, Trash2, Package, Truck, Receipt, Wallet } from 'lucide-react';
+import { Plus, Eye, Edit, Copy, Trash2, Package, Truck, Receipt, Wallet, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -13,6 +13,7 @@ import SalesOrderView from '../components/views/SalesOrderView';
 import CreateInvoiceDialog from '../components/forms/CreateInvoiceDialog'; 
 import RecordPaymentDialog from '../components/forms/RecordPaymentDialog';
 import CreateShipmentDialog from '../components/forms/CreateShipmentDialog';
+import { Input } from '@/components/ui/input';
 
 // API functions
 const fetchSalesOrders = async (): Promise<SalesOrder[]> => {
@@ -47,6 +48,7 @@ export default function SalesOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [salesOrderToDelete, setSalesOrderToDelete] = useState<SalesOrder | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadSalesOrders();
@@ -408,11 +410,25 @@ export default function SalesOrdersPage() {
       </div>
 
       <Card>
-        <CardContent className='pt-5'>
+        <CardContent className="pt-5">
+          {/* 🔎 Search bar */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="relative w-[250px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search sales orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* 📊 DataTable */}
           <DataTable
             data={salesOrders}
             columns={columns}
-            searchPlaceholder="Search sales orders..."
+            searchTerm={searchTerm} // 👈 pass search term into DataTable
             onRowClick={handleViewSalesOrder}
             actions={getActionItems}
           />

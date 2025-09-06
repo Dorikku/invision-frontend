@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Trash2, FileText, Mail } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, FileText, Mail, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { DataTable } from '../components/ui/data-table';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import type { Invoice } from '../types';
 import InvoiceForm from '../components/forms/InvoiceForm';
 import InvoiceView from '../components/views/InvoiceView';
+import { Input } from '@/components/ui/input';
 
 
 // Mock API functions
@@ -54,6 +55,7 @@ export default function InvoicesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadInvoices();
@@ -272,12 +274,27 @@ export default function InvoicesPage() {
         </Card>
       </div>
 
+
       <Card>
         <CardContent className="pt-5">
+          {/* 🔎 Search bar */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="relative w-[250px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search Invoices..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* 📊 DataTable */}
           <DataTable
             data={invoices}
             columns={columns}
-            searchPlaceholder="Search invoices..."
+            searchTerm={searchTerm} // 👈 pass search term into DataTable
             onRowClick={handleViewInvoice}
             actions={getActionItems}
           />

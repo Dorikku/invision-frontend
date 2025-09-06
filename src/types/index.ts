@@ -22,14 +22,20 @@ export interface Supplier {
   company: string;
 }
 
-export interface Product {
-  id: string; // e.g., "prod_001"
+export interface Category{
+  id: number;
+  name: string;
+  description?: string;
+}
+
+export interface Product extends Record<string, unknown>{
+  id: string;
   name: string;
   sku: string;
   description?: string;
   category_id?: number;
+  category_name: string;
   quantity: number;
-  // tax_rate: number;
   cost_price: number;
   selling_price: number;
   image?: string;
@@ -44,7 +50,6 @@ export interface LineItem {
   unitCost: number;
   unitPrice: number;
   total: number;
-  // taxAmount: number;
   taxRate: number;
   shippedQuantity: number;
 }
