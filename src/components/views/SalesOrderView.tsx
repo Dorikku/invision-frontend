@@ -3,54 +3,72 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Separator } from '../../components/ui/separator';
-import { Edit, Printer, Mail, Receipt, Truck, Wallet, CircleX} from 'lucide-react';
+import { Edit, Printer, Mail, Receipt, Truck, Wallet, CircleX } from 'lucide-react';
 import type { SalesOrder } from '../../types';
 import CreateInvoiceDialog from '../forms/CreateInvoiceDialog';
 import CreateShipmentDialog from '../../components/forms/CreateShipmentDialog';
-import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog'; // Adjust path as needed
+import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
 
 interface SalesOrderViewProps {
   salesOrder: SalesOrder;
   onClose: () => void;
   onEdit: () => void;
+  onRefresh: (id: number) => void; // ✅ new
 }
 
-export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrderViewProps) {
+export default function SalesOrderView({
+  salesOrder,
+  onClose,
+  onEdit,
+  onRefresh,
+}: SalesOrderViewProps) {
   const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+  const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
 
   const getInvoiceStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'not_invoiced': return 'destructive';
-      case 'partial': return 'secondary';
-      case 'invoiced': return 'success';
-      default: return 'secondary';
+      case 'not_invoiced':
+        return 'destructive';
+      case 'partial':
+        return 'secondary';
+      case 'invoiced':
+        return 'success';
+      default:
+        return 'secondary';
     }
   };
 
   const getPaymentStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'unpaid': return 'destructive';
-      case 'partial': return 'secondary';
-      case 'paid': return 'success';
-      default: return 'secondary';
+      case 'unpaid':
+        return 'destructive';
+      case 'partial':
+        return 'secondary';
+      case 'paid':
+        return 'success';
+      default:
+        return 'secondary';
     }
   };
 
   const getShipmentStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'not_shipped': return 'destructive';
-      case 'partial': return 'secondary';
-      case 'shipped': return 'success';
-      // case 'delivered': return 'success';
-      default: return 'secondary';
+      case 'not_shipped':
+        return 'destructive';
+      case 'partial':
+        return 'secondary';
+      case 'shipped':
+        return 'success';
+      default:
+        return 'secondary';
     }
   };
 
   const formatStatusText = (status: string) => {
     return status
       .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
@@ -61,8 +79,6 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
   const handleSendEmail = () => {
     alert('Email functionality would be implemented here');
   };
-
-  const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
 
   const handleCreateInvoice = () => {
     setIsCreateInvoiceOpen(true);
@@ -78,6 +94,7 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Sales Order {salesOrder.orderNumber}</h2>
@@ -101,6 +118,7 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
         </div>
       </div>
 
+      {/* Order + Customer Info */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -117,9 +135,10 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
             </div>
             {salesOrder.salesPersonName && (
               <div>
-                <span className="font-medium">Sales Person:</span> {salesOrder.salesPersonName}
+                <span className="font-medium">Sales Person:</span>{' '}
+                {salesOrder.salesPersonName}
               </div>
-            )}            
+            )}
             <div className="space-y-2">
               <div>
                 <span className="font-medium">Invoice Status:</span>{' '}
@@ -142,13 +161,13 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
             </div>
             {salesOrder.quotationId && (
               <div>
-                <span className="font-medium">From Quotation #:</span> {salesOrder.quotationId}
+                <span className="font-medium">From Quotation #:</span>{' '}
+                {salesOrder.quotationId}
               </div>
             )}
-
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Customer Information</CardTitle>
@@ -158,7 +177,8 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
               <span className="font-medium">Name:</span> {salesOrder.customerName}
             </div>
             <div>
-              <span className="font-medium">Contact Person:</span> {salesOrder.customerContactPerson}
+              <span className="font-medium">Contact Person:</span>{' '}
+              {salesOrder.customerContactPerson}
             </div>
             {salesOrder.customerEmail && (
               <div>
@@ -177,6 +197,7 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
         </Card>
       </div>
 
+      {/* Items */}
       <Card>
         <CardHeader>
           <CardTitle>Items</CardTitle>
@@ -202,15 +223,14 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
                 <div className="col-span-2">{item.quantity}</div>
                 <div className="col-span-2">₱ {item.unitPrice.toFixed(2)}</div>
                 <div className="col-span-2">{item.taxRate * 100}%</div>
-                <div className="col-span-2 text-right">
-                  ₱ {item.total.toFixed(2)}
-                </div>
+                <div className="col-span-2 text-right">₱ {item.total.toFixed(2)}</div>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
+      {/* Summary */}
       <Card>
         <CardHeader>
           <CardTitle>Summary</CardTitle>
@@ -234,6 +254,7 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
         </CardContent>
       </Card>
 
+      {/* Notes */}
       {salesOrder.notes && (
         <Card>
           <CardHeader>
@@ -247,33 +268,41 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
         </Card>
       )}
 
-      {/* ✅ ACTION BUTTONS */}
+      {/* Action buttons */}
       <div className="flex justify-end gap-2">
-        {["not_invoiced", "partially_invoiced"].includes(salesOrder.invoiceStatus) && (
-          <Button onClick={handleCreateInvoice}><Receipt className="mr-2 h-4 w-4" /> Create Invoice</Button>
+        {['not_invoiced', 'partial'].includes(salesOrder.invoiceStatus) && (
+          <Button onClick={handleCreateInvoice}>
+            <Receipt className="mr-2 h-4 w-4" /> Create Invoice
+          </Button>
         )}
 
-        {["invoiced", "partially_invoiced"].includes(salesOrder.invoiceStatus) &&
-          salesOrder.paymentStatus !== "paid" && (
-            <Button onClick={handleRecordPayment}><Wallet className="mr-2 h-4 w-4" /> Record Payment</Button>
+        {['invoiced', 'partial'].includes(salesOrder.invoiceStatus) &&
+          salesOrder.paymentStatus !== 'paid' && (
+            <Button onClick={handleRecordPayment}>
+              <Wallet className="mr-2 h-4 w-4" /> Record Payment
+            </Button>
           )}
 
-        {salesOrder.shipmentStatus !== "shipped" && (
-            <Button onClick={handleCreateShipment}><Truck className="mr-2 h-4 w-4" /> Create Shipment</Button>
-          )}
+        {salesOrder.shipmentStatus !== 'shipped' && (
+          <Button onClick={handleCreateShipment}>
+            <Truck className="mr-2 h-4 w-4" /> Create Shipment
+          </Button>
+        )}
 
         <Button variant="outline" onClick={onClose}>
           <CircleX className="mr-2 h-4 w-4" />
           Close
         </Button>
       </div>
+
+      {/* Dialogs with refresh */}
       <CreateInvoiceDialog
         open={isCreateInvoiceOpen}
         onOpenChange={setIsCreateInvoiceOpen}
         salesOrder={salesOrder}
         onInvoiceCreated={() => {
-          // Trigger any necessary updates, e.g., refresh sales orders
           setIsCreateInvoiceOpen(false);
+          onRefresh(salesOrder.id);
         }}
       />
 
@@ -283,7 +312,7 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
         salesOrder={salesOrder}
         onPaymentRecorded={() => {
           setIsRecordPaymentOpen(false);
-          // Optionally trigger a refresh of the sales order data
+          onRefresh(salesOrder.id);
         }}
       />
 
@@ -293,7 +322,7 @@ export default function SalesOrderView({ salesOrder, onClose, onEdit }: SalesOrd
         salesOrder={salesOrder}
         onShipmentCreated={() => {
           setIsCreateShipmentOpen(false);
-          // Optionally trigger a refresh of the sales order data
+          onRefresh(salesOrder.id);
         }}
       />
     </div>

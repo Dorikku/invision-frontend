@@ -139,3 +139,14 @@ export interface PurchaseOrder extends Record<string, unknown> {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Payment {
+  id: string;
+  invoiceId: string;
+  paymentDate: string;  // ISO date
+  amount: number;
+  method: string;
+  reference?: string;
+  notes?: string;
+  document?: string;  // URL or path to receipt
+}

@@ -24,6 +24,14 @@ const fetchSalesOrders = async (): Promise<SalesOrder[]> => {
   return response.json();
 };
 
+const fetchSalesOrder = async (id: number): Promise<SalesOrder> => {
+  const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${id}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch sales order');
+  }
+  return response.json();
+};
+
 const deleteSalesOrder = async (id: number): Promise<void> => {
   const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${id}`, { 
     method: 'DELETE' 
@@ -67,6 +75,26 @@ export default function SalesOrdersPage() {
     }
   };
 
+  // ✅ Also updates the currently opened SalesOrderView
+  const refreshSalesOrder = async (salesOrderId: number) => {
+    try {
+      const updatedOrder = await fetchSalesOrder(salesOrderId);
+
+      // Update the table list
+      setSalesOrders(prev =>
+        prev.map(order => (order.id === salesOrderId ? updatedOrder : order))
+      );
+
+      // ✅ Update the selected order shown in the dialog
+      setSelectedSalesOrder(prev =>
+        prev && prev.id === salesOrderId ? updatedOrder : prev
+      );
+    } catch (error) {
+      console.error('Error refreshing sales order:', error);
+      toast.error('Failed to refresh sales order');
+    }
+  };
+
   const handleCreateSalesOrder = () => {
     setEditingSalesOrder(null);
     setIsFormOpen(true);
@@ -84,7 +112,6 @@ export default function SalesOrdersPage() {
 
   const handleDuplicateSalesOrder = async (salesOrder: SalesOrder) => {
     try {
-      // Create a copy of the sales order without the ID and with new dates
       const duplicateData = {
         customerId: salesOrder.customerId,
         salesPersonId: salesOrder.salesPersonId,
@@ -100,11 +127,10 @@ export default function SalesOrdersPage() {
           unitPrice: item.unitPrice,
           total: item.total,
           taxRate: item.taxRate,
-          shippedQuantity: 0 // Reset shipped quantity for duplicate
+          shippedQuantity: 0
         })),
         subtotal: salesOrder.subtotal,
         tax: salesOrder.tax,
-        // taxRate: salesOrder.taxRate,
         total: salesOrder.total,
         invoiceStatus: 'not_invoiced' as const,
         paymentStatus: 'unpaid' as const,
@@ -170,8 +196,6 @@ export default function SalesOrdersPage() {
 
   const handleSaveSalesOrder = async (salesOrderData: Partial<SalesOrder>) => {
     try {
-      // The API call is now handled inside the SalesOrderForm component
-      // This callback is called after successful save
       await loadSalesOrders();
       setIsFormOpen(false);
       setEditingSalesOrder(null);
@@ -184,8 +208,6 @@ export default function SalesOrdersPage() {
 
   const handleCreateFromQuotation = async (quotationId: string) => {
     try {
-      // You might want to implement this endpoint on your backend
-      // For now, this will use your existing quotation data
       const quotationsResponse = await fetch('http://127.0.0.1:8000/api/v1/quotations');
       if (!quotationsResponse.ok) {
         throw new Error('Failed to fetch quotations');
@@ -411,7 +433,6 @@ export default function SalesOrdersPage() {
 
       <Card>
         <CardContent className="pt-5">
-          {/* 🔎 Search bar */}
           <div className="flex items-center justify-between mb-4">
             <div className="relative w-[250px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -423,12 +444,10 @@ export default function SalesOrdersPage() {
               />
             </div>
           </div>
-
-          {/* 📊 DataTable */}
           <DataTable
             data={salesOrders}
             columns={columns}
-            searchTerm={searchTerm} // 👈 pass search term into DataTable
+            searchTerm={searchTerm}
             onRowClick={handleViewSalesOrder}
             actions={getActionItems}
           />
@@ -469,6 +488,10 @@ export default function SalesOrdersPage() {
                 setIsViewOpen(false);
                 handleEditSalesOrder(selectedSalesOrder);
               }}
+              onRefresh={(id) => {
+                // ✅ keep both the row and the open view in sync
+                refreshSalesOrder(id);
+              }}
             />
           )}
         </DialogContent>
@@ -497,7 +520,6 @@ export default function SalesOrdersPage() {
         </DialogContent>
       </Dialog>
 
-
       {invoiceSalesOrder && (
         <CreateInvoiceDialog
           open={isCreateInvoiceOpen}
@@ -505,6 +527,7 @@ export default function SalesOrdersPage() {
           salesOrder={invoiceSalesOrder}
           onInvoiceCreated={() => {
             loadSalesOrders();
+            if (invoiceSalesOrder) refreshSalesOrder(invoiceSalesOrder.id);
             setIsCreateInvoiceOpen(false);
             setInvoiceSalesOrder(null);
           }}
@@ -517,6 +540,9 @@ export default function SalesOrdersPage() {
           onOpenChange={setIsRecordPaymentOpen}
           salesOrder={paymentSalesOrder}
           onPaymentRecorded={() => {
+            if (paymentSalesOrder) {
+              refreshSalesOrder(paymentSalesOrder.id);
+            }
             loadSalesOrders();
             setIsRecordPaymentOpen(false);
             setPaymentSalesOrder(null);
@@ -531,6 +557,10 @@ export default function SalesOrdersPage() {
           salesOrder={shipmentSalesOrder}
           onShipmentCreated={() => {
             loadSalesOrders();
+            if (shipmentSalesOrder) {
+              // ⏳ wait a bit before refreshing so backend has time to update
+              setTimeout(() => refreshSalesOrder(shipmentSalesOrder.id), 500);
+            }
             setIsCreateShipmentOpen(false);
             setShipmentSalesOrder(null);
           }}

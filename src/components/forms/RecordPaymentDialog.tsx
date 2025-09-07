@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Checkbox } from '../ui/checkbox';
-import { Separator } from '../ui/separator';
-import { Card, CardContent } from '../ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { getInvoices, saveInvoices, getSalesOrders, saveSalesOrders } from '../../lib/storage';
-import type { SalesOrder, Invoice } from '../../types';
+import type { SalesOrder, Invoice } from '@/types';  // Assume Invoice has id, invoiceNumber, status, total
+import { ScrollArea } from '../ui/scroll-area';
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -19,155 +19,150 @@ interface RecordPaymentDialogProps {
   onPaymentRecorded: () => void;
 }
 
-type Mode = 'choice' | 'partial';
-
-interface PaymentItem {
-  invoice: Invoice;
-  selected: boolean;
-  paymentAmount: number;
-}
-
 export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, onPaymentRecorded }: RecordPaymentDialogProps) {
-  const [mode, setMode] = useState<Mode>('choice');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
+  const [remainingBalance, setRemainingBalance] = useState<number>(0);
   const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
-  const [paymentReference, setPaymentReference] = useState<string>('');
+  const [amount, setAmount] = useState<number>(0);
+  const [method, setMethod] = useState<string>('');
+  const [reference, setReference] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [paymentItems, setPaymentItems] = useState<PaymentItem[]>([]);
-  const [totalPayment, setTotalPayment] = useState<number>(0);
+  const [receipt, setReceipt] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [fetchingInvoices, setFetchingInvoices] = useState<boolean>(false);
 
   useEffect(() => {
     if (open) {
-      setMode('choice');
+      fetchInvoices();
       setPaymentDate(new Date().toISOString().split('T')[0]);
-      setPaymentMethod('credit_card');
-      setPaymentReference('');
-      setNotes('');
-      const invoices = getInvoices().filter(
-        (inv) => inv.salesOrderId === salesOrder.id && inv.status !== 'paid' && inv.status !== 'cancelled'
-      );
-      setPaymentItems(
-        invoices.map((inv) => ({
-          invoice: inv,
-          selected: false,
-          paymentAmount: 0,
-        }))
-      );
-      setTotalPayment(0);
+      resetForm();
     }
-  }, [open, salesOrder]);
+  }, [open]);
 
-  const calculateOutstandingBalance = (invoice: Invoice) => {
-    return invoice.total - (invoice.paidAmount || 0);
+  const fetchInvoices = async () => {
+    setFetchingInvoices(true);
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${salesOrder.id}/invoices`);
+      if (!response.ok) throw new Error('Failed to fetch invoices');
+      const data: Invoice[] = await response.json();
+      const openInvoices = data.filter(inv => ['unpaid', 'partial', 'overdue'].includes(inv.status));
+      setInvoices(openInvoices);
+      if (openInvoices.length > 0) setSelectedInvoiceId(openInvoices[0].id.toString());
+    } catch (err) {
+      toast.error('Failed to load invoices');
+    } finally {
+      setFetchingInvoices(false);
+    }
   };
 
-  const calculateTotalPayment = (items: PaymentItem[]) => {
-    const total = items.reduce((sum, item) => (item.selected ? item.paymentAmount : 0), 0);
-    setTotalPayment(total);
+  useEffect(() => {
+    if (selectedInvoiceId) {
+      fetchRemainingBalance(selectedInvoiceId);
+    }
+  }, [selectedInvoiceId]);
+
+  const fetchRemainingBalance = async (invoiceId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/invoices/${invoiceId}/remaining-balance`);
+      if (!response.ok) throw new Error('Failed to fetch remaining balance');
+      const { remaining_balance } = await response.json();
+      setRemainingBalance(remaining_balance);
+      setAmount(0);  // Reset amount
+    } catch (err) {
+      toast.error('Failed to load remaining balance');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleItemSelect = (index: number, selected: boolean) => {
-    const newPaymentItems = [...paymentItems];
-    newPaymentItems[index].selected = selected;
-    newPaymentItems[index].paymentAmount = selected ? calculateOutstandingBalance(newPaymentItems[index].invoice) : 0;
-    setPaymentItems(newPaymentItems);
-    calculateTotalPayment(newPaymentItems);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {  // 5MB limit
+        setError('File size exceeds 5MB limit');
+        return;
+      }
+      setReceipt(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setError('');
+    }
   };
 
-  const handlePaymentAmountChange = (index: number, amount: number) => {
-    const newPaymentItems = [...paymentItems];
-    const maxAmount = calculateOutstandingBalance(newPaymentItems[index].invoice);
-    newPaymentItems[index].paymentAmount = Math.max(0, Math.min(amount, maxAmount));
-    newPaymentItems[index].selected = newPaymentItems[index].paymentAmount > 0;
-    setPaymentItems(newPaymentItems);
-    calculateTotalPayment(newPaymentItems);
+  const handlePayFull = () => {
+    setAmount(remainingBalance);
   };
 
-  const handleRecordFullPayment = () => {
-    const invoices = getInvoices().filter(
-      (inv) => inv.salesOrderId === salesOrder.id && inv.status !== 'paid' && inv.status !== 'cancelled'
-    );
-    const updatedInvoices: Invoice[] = invoices.map((inv) => ({
-      ...inv,
-      paidAmount: (inv.paidAmount || 0) + calculateOutstandingBalance(inv),
-      status: 'paid' as const, // Explicitly cast to literal type
-      updatedAt: new Date().toISOString(),
-    }));
-    saveInvoices([...getInvoices().filter((inv) => inv.salesOrderId !== salesOrder.id), ...updatedInvoices]);
-
-    const allSalesOrders = getSalesOrders();
-    const updatedSalesOrders: SalesOrder[] = allSalesOrders.map((so) =>
-      so.id === salesOrder.id
-        ? {
-            ...so,
-            paymentStatus: 'paid' as const, // Explicitly cast to literal type
-            updatedAt: new Date().toISOString(),
-          }
-        : so
-    );
-    saveSalesOrders(updatedSalesOrders);
-
-    toast.success('Full payment recorded successfully');
-    onPaymentRecorded();
-    onOpenChange(false);
+  const validateForm = () => {
+    if (!selectedInvoiceId) return 'Please select an invoice';
+    if (amount <= 0 || amount > remainingBalance) return 'Amount must be between 0 and remaining balance';
+    if (!method) return 'Please select a payment method';
+    return '';
   };
 
-  const handleRecordPartialPayment = () => {
-    const selectedItems = paymentItems.filter((item) => item.selected && item.paymentAmount > 0);
-    if (selectedItems.length === 0) {
-      toast.error('Please select at least one invoice and enter a valid payment amount.');
+  const handleSubmit = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    const invoices = getInvoices();
-    const updatedInvoices: Invoice[] = invoices.map((inv) => {
-      const paymentItem = selectedItems.find((item) => item.invoice.id === inv.id);
-      if (paymentItem) {
-        const newPaidAmount = (inv.paidAmount || 0) + paymentItem.paymentAmount;
-        const outstanding = inv.total - newPaidAmount;
-        const newStatus: Invoice['status'] =
-          outstanding <= 0 ? 'paid' : inv.status === 'draft' ? 'draft' : 'sent'; // Maintain 'draft' if not sent, else 'sent'
-        return { ...inv, paidAmount: newPaidAmount, status: newStatus, updatedAt: new Date().toISOString() };
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('invoice_id', selectedInvoiceId!);
+      formData.append('payment_date', paymentDate);
+      formData.append('amount', amount.toString());
+      formData.append('method', method);
+      if (reference) formData.append('reference', reference);
+      if (notes) formData.append('notes', notes);
+      if (receipt) formData.append('receipt', receipt);
+
+      const response = await fetch('http://127.0.0.1:8000/api/v1/payments', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to record payment');
       }
-      return inv;
-    });
-    saveInvoices(updatedInvoices);
-
-    const allSalesOrders = getSalesOrders();
-    const allInvoices = updatedInvoices.filter((inv) => inv.salesOrderId === salesOrder.id);
-    const allInvoicesPaid = allInvoices.every((inv) => inv.status === 'paid' || inv.status === 'cancelled');
-    const updatedSalesOrders: SalesOrder[] = allSalesOrders.map((so) =>
-      so.id === salesOrder.id
-        ? {
-            ...so,
-            paymentStatus: allInvoicesPaid ? 'paid' : 'partial' as const, // Explicitly cast to literal type
-            updatedAt: new Date().toISOString(),
-          }
-        : so
-    );
-    saveSalesOrders(updatedSalesOrders);
-
-    toast.success('Partial payment recorded successfully');
-    onPaymentRecorded();
-    onOpenChange(false);
+      toast.success('Payment recorded successfully');
+      onPaymentRecorded();
+      onOpenChange(false);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (mode === 'choice') {
+  const resetForm = () => {
+    setSelectedInvoiceId(null);
+    setRemainingBalance(0);
+    setAmount(0);
+    setMethod('');
+    setReference('');
+    setNotes('');
+    setReceipt(null);
+    setPreviewUrl(null);
+    setError('');
+  };
+
+  if (fetchingInvoices) {
+    return <div>Loading invoices...</div>;
+  }
+
+  if (invoices.length === 0) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Record Payment</DialogTitle>
-            <DialogDescription>
-              Choose how to record payment for sales order {salesOrder.orderNumber}.
-            </DialogDescription>
+            <DialogDescription>No open invoices for sales order {salesOrder.orderNumber}.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
-            <Button onClick={handleRecordFullPayment}>Record Full Payment</Button>
-            <Button onClick={() => setMode('partial')} variant="outline">
-              Record Partial Payment
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     );
@@ -175,115 +170,93 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record Partial Payment</DialogTitle>
-          <DialogDescription>
-            Allocate payment amounts to invoices for sales order {salesOrder.orderNumber}.
-          </DialogDescription>
+          <DialogTitle>Record Payment for Sales Order {salesOrder.orderNumber}</DialogTitle>
+          <DialogDescription>Select an invoice and enter payment details.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-6">
-          {/* Payment Details */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <Label htmlFor="paymentDate">Payment Date</Label>
-              <Input
-                id="paymentDate"
-                type="date"
-                value={paymentDate}
-                onChange={(e) => setPaymentDate(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="paymentMethod">Payment Method</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger id="paymentMethod">
-                  <SelectValue placeholder="Select payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="check">Check</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="paymentReference">Payment Reference</Label>
-              <Input
-                id="paymentReference"
-                value={paymentReference}
-                onChange={(e) => setPaymentReference(e.target.value)}
-              />
-            </div>
+        {/* <ScrollArea className="max-h-[60vh] pr-4"> */}
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="invoice">Invoice</Label>
+            <Select value={selectedInvoiceId || ''} onValueChange={setSelectedInvoiceId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select invoice" />
+              </SelectTrigger>
+              <SelectContent>
+                {invoices.map(inv => (
+                  <SelectItem key={inv.id} value={inv.id.toString()}>{inv.invoiceNumber} ({inv.status})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Invoice Selection */}
-          <div>
-            <Label>Invoices to Pay</Label>
-            <div className="mt-2 border rounded-md overflow-hidden">
-              <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium text-muted-foreground bg-muted/50">
-                <div className="col-span-1"></div>
-                <div className="col-span-2">Invoice #</div>
-                <div className="col-span-2">Date</div>
-                <div className="col-span-2">Total</div>
-                <div className="col-span-2">Outstanding</div>
-                <div className="col-span-3">Payment Amount</div>
+          {selectedInvoiceId && (
+            <>
+              <div className="text-sm text-muted-foreground">
+                Remaining Balance: ₱{remainingBalance.toFixed(2)}
               </div>
               <Separator />
-              {paymentItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-4 p-4 items-center text-sm">
-                  <div className="col-span-1 flex items-center">
-                    <Checkbox
-                      checked={item.selected}
-                      onCheckedChange={(checked) => handleItemSelect(index, checked as boolean)}
-                    />
-                  </div>
-                  <div className="col-span-2">{item.invoice.invoiceNumber}</div>
-                  <div className="col-span-2">{new Date(item.invoice.date).toLocaleDateString()}</div>
-                  <div className="col-span-2">${item.invoice.total.toFixed(2)}</div>
-                  <div className="col-span-2">${calculateOutstandingBalance(item.invoice).toFixed(2)}</div>
-                  <div className="col-span-3">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={calculateOutstandingBalance(item.invoice)}
-                      value={item.paymentAmount}
-                      onChange={(e) => handlePaymentAmountChange(index, parseFloat(e.target.value) || 0)}
-                      disabled={!item.selected}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-            />
-          </div>
-
-          {/* Summary */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between font-bold">
-                <span>Total Payment:</span>
-                <span>${totalPayment.toFixed(2)}</span>
+              <div>
+                <Label htmlFor="paymentDate">Payment Date</Label>
+                <Input id="paymentDate" type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input id="amount" type="number" min="0" max={remainingBalance} value={amount} onChange={e => setAmount(parseFloat(e.target.value) || 0)} />
+                </div>
+                <Button variant="outline" onClick={handlePayFull}>Pay Full</Button>
+              </div>
+              <div>
+                <Label htmlFor="method">Payment Method</Label>
+                <Select value={method} onValueChange={setMethod}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="Credit Card">Credit Card</SelectItem>
+                    <SelectItem value="Check">Check</SelectItem>
+                    <SelectItem value="GCash">GCash</SelectItem>
+                    <SelectItem value="Maya">Maya</SelectItem>
+                    <SelectItem value="PayPal">PayPal</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="reference">Reference</Label>
+                <Input id="reference" value={reference} onChange={e => setReference(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="receipt">Receipt (Image)</Label>
+                <Input id="receipt" type="file" accept="image/*" onChange={handleFileChange} />
+                {previewUrl && <img src={previewUrl} alt="Preview" className="mt-2 max-h-40" />}
+              </div>
+            </>
+          )}
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </div>
+        
         <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={() => setMode('choice')}>Back to Choice</Button>
-          <Button onClick={handleRecordPartialPayment}>Record Payment</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={loading || !selectedInvoiceId}>
+            {loading ? 'Submitting...' : 'Record Payment'}
+          </Button>
         </DialogFooter>
+        {/* </ScrollArea> */}
       </DialogContent>
     </Dialog>
   );
