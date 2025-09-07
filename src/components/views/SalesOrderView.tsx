@@ -131,7 +131,7 @@ export default function SalesOrderView({
             </div>
             {salesOrder.deliveryDate && (
               <div>
-                <span className="font-medium">Delivery Date:</span>{' '}
+                <span className="font-medium">Date Shipped:</span>{' '}
                 {new Date(salesOrder.deliveryDate).toLocaleDateString()}
               </div>
             )}
