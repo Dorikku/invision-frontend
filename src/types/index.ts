@@ -51,7 +51,7 @@ export interface LineItem {
   unitPrice: number;
   total: number;
   taxRate: number;
-  shippedQuantity: number;
+  // shippedQuantity: number;
 }
 
 export interface Quotation extends Record<string, unknown> {
@@ -113,7 +113,7 @@ export interface Invoice extends Record<string, unknown> {
   subtotal: number;
   tax: number;
   total: number;
-  status: 'draft' | 'sent' | 'paid' | 'partially_paid' | 'overdue' | 'cancelled';
+  status: 'unpaid' | 'partial' | 'paid'  | 'overdue' | 'cancelled';
   paidAmount: number;
   notes: string;
   createdAt: string;

@@ -117,7 +117,7 @@ export default function SalesOrdersPage() {
         salesPersonId: salesOrder.salesPersonId,
         quotationId: salesOrder.quotationId,
         date: new Date().toISOString().split('T')[0],
-        deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        // deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         items: salesOrder.items.map(item => ({
           id: item.id,
           productName: item.productName,

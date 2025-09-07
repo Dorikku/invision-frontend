@@ -107,9 +107,9 @@ export default function InvoicesPage() {
     try {
       await sendInvoiceAPI(invoice.id);
       // Update local state to reflect sent status
-      setInvoices(prev => prev.map(i => 
-        i.id === invoice.id ? { ...i, status: 'sent' } : i
-      ));
+      // setInvoices(prev => prev.map(i => 
+      //   i.id === invoice.id ? { ...i, status: 'sent' } : i
+      // ));
       toast.success(`Invoice ${invoice.invoiceNumber} sent to customer`);
     } catch (error) {
       console.error('Failed to send invoice:', error);
@@ -190,7 +190,7 @@ export default function InvoicesPage() {
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => handleSendInvoice(invoice)}
-          disabled={invoice.status === 'sent' || invoice.status === 'paid'}
+          // disabled={invoice.status === 'sent' || invoice.status === 'paid'}
         >
           <Mail className="mr-2 h-4 w-4" />
           Send
@@ -254,11 +254,11 @@ export default function InvoicesPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium">Unpaid</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {invoices.filter(i => i.status === 'sent').length}
+              {invoices.filter(i => i.status === 'unpaid').length}
             </div>
           </CardContent>
         </Card>
