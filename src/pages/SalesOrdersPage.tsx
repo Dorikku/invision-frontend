@@ -112,50 +112,44 @@ export default function SalesOrdersPage() {
 
   const handleDuplicateSalesOrder = async (salesOrder: SalesOrder) => {
     try {
-      const duplicateData = {
-        customerId: salesOrder.customerId,
-        salesPersonId: salesOrder.salesPersonId,
-        quotationId: salesOrder.quotationId,
-        date: new Date().toISOString().split('T')[0],
-        // deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        items: salesOrder.items.map(item => ({
-          id: item.id,
-          productName: item.productName,
-          description: item.description,
+      // Build the payload for backend CreateSalesOrderRequest
+      const requestPayload = {
+        quotation_id: null, // reset
+        customer_id: salesOrder.customerId,
+        sales_person_id: salesOrder.salesPersonId,
+        date: new Date().toISOString().split("T")[0], // today's date (YYYY-MM-DD)
+        invoice_status: "not_invoiced",
+        payment_status: "unpaid",
+        shipment_status: "not_shipped",
+        notes: salesOrder.notes ?? "",
+        items: salesOrder.items.map((item) => ({
+          product_id: item.productId,
           quantity: item.quantity,
-          unitCost: item.unitCost,
-          unitPrice: item.unitPrice,
-          total: item.total,
-          taxRate: item.taxRate,
-          shippedQuantity: 0
+          price: item.unitPrice,
+          tax_rate: item.taxRate,
         })),
-        subtotal: salesOrder.subtotal,
-        tax: salesOrder.tax,
-        total: salesOrder.total,
-        invoiceStatus: 'not_invoiced' as const,
-        paymentStatus: 'unpaid' as const,
-        shipmentStatus: 'not_shipped' as const,
-        notes: salesOrder.notes,
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/v1/sales-orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(duplicateData),
+      const response = await fetch("http://127.0.0.1:8000/api/v1/sales-orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestPayload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to duplicate sales order');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to duplicate sales order");
       }
 
-      await loadSalesOrders();
-      toast.success('Sales order duplicated successfully');
+      const newOrder: SalesOrder = await response.json();
+
+      // Append new order instead of reloading all
+      setSalesOrders((prev) => [newOrder, ...prev]);
+
+      toast.success("Sales order duplicated successfully");
     } catch (error) {
-      console.error('Error duplicating sales order:', error);
-      toast.error('Failed to duplicate sales order');
+      console.error("Error duplicating sales order:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to duplicate sales order");
     }
   };
 

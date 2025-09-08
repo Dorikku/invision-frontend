@@ -51,7 +51,6 @@ export interface LineItem {
   unitPrice: number;
   total: number;
   taxRate: number;
-  // shippedQuantity: number;
 }
 
 export interface Quotation extends Record<string, unknown> {
