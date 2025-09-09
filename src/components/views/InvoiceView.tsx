@@ -130,8 +130,8 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
                     </div>
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">₱{item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell className="text-right font-medium">₱{item.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">₱{item.unitPrice}</TableCell>
+                  <TableCell className="text-right font-medium">₱{item.total}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

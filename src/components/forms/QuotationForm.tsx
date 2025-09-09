@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Textarea } from '../../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Combobox } from '../ui/combobox';
 import { Plus, Trash2 } from 'lucide-react';
-import { getCustomers, getProducts } from '../../lib/storage';
-import type { Quotation, Customer, Product, LineItem } from '../../types';
+import type { Quotation, Customer, Product, SalesPerson } from '../../types';
 
 interface QuotationFormProps {
   quotation?: Quotation | null;
@@ -16,59 +15,127 @@ interface QuotationFormProps {
   onCancel: () => void;
 }
 
+interface FormLineItem {
+  tempId: string; // Temporary ID for frontend tracking
+  productId: string;
+  productName: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  taxRate: number;
+}
+
 export default function QuotationForm({ quotation, onSave, onCancel }: QuotationFormProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  
+  const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [formData, setFormData] = useState({
+    salesPersonId: quotation?.salesPersonId || '1', // Default to sales person ID 1
     customerId: quotation?.customerId || '',
-    date: quotation?.date || new Date().toISOString().split('T')[0],
-    validUntil: quotation?.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    status: quotation?.status || 'draft' as const,
+    date: quotation?.date ? new Date(quotation.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    validUntil: quotation?.validUntil ? new Date(quotation.validUntil).toISOString().split('T')[0] : '',
     notes: quotation?.notes || '',
-    taxRate: quotation?.taxRate || 10,
   });
+  const [items, setItems] = useState<FormLineItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const [items, setItems] = useState<LineItem[]>(
-    quotation?.items || []
-  );
+  // Convert existing quotation items to form format
+  useEffect(() => {
+    if (quotation?.items) {
+      const formItems: FormLineItem[] = quotation.items.map(item => ({
+        tempId: item.id || Date.now().toString(), // Use existing ID as temp ID for editing
+        productId: String(item.productId),
+        productName: item.productName || '',
+        description: item.description || '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total,
+        taxRate: item.taxRate,
+      }));
+      setItems(formItems);
+    }
+  }, [quotation]);
 
   useEffect(() => {
-    setCustomers(getCustomers());
-    setProducts(getProducts());
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Fetch customers
+        const customerResponse = await fetch('http://127.0.0.1:8000/api/v1/customers');
+        if (!customerResponse.ok) {
+          throw new Error('Failed to fetch customers');
+        }
+        const customerData = await customerResponse.json();
+        setCustomers(customerData);
+
+        // Fetch products
+        const productResponse = await fetch('http://127.0.0.1:8000/api/v1/products');
+        if (!productResponse.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const productData = await productResponse.json();
+        setProducts(productData);
+
+        // Fetch SalesPersons
+        const salesPersonResponse = await fetch('http://127.0.0.1:8000/api/v1/salespersons');
+        if (!salesPersonResponse.ok) {
+          throw new Error('Failed to fetch sales persons');
+        }
+        const salesPersonData = await salesPersonResponse.json();
+        setSalesPersons(salesPersonData);
+      } catch (err) {
+        setError('Error fetching data');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
 
+  const productOptions = products.map(product => ({
+    value: String(product.id),
+    label: product.name,
+    description: `₱${product.selling_price.toFixed(2)} - ${product.description || ''}`
+  }));
+
   const addItem = () => {
-    const newItem: LineItem = {
-      id: Date.now().toString(),
+    const newItem: FormLineItem = {
+      tempId: Date.now().toString(), // Temporary ID for frontend tracking
       productId: '',
       productName: '',
       description: '',
       quantity: 1,
       unitPrice: 0,
       total: 0,
-      taxAmount: 0
+      taxRate: 0,
     };
     setItems([...items, newItem]);
   };
 
-  const updateItem = (index: number, field: keyof LineItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof FormLineItem, value: string | number) => {
     const updatedItems = [...items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
 
     if (field === 'productId') {
-      const product = products.find(p => p.id === value);
+      const product = products.find(p => String(p.id) === value);
       if (product) {
         updatedItems[index].productName = product.name;
-        updatedItems[index].description = product.description;
-        updatedItems[index].unitPrice = product.price;
+        updatedItems[index].description = product.description || '';
+        updatedItems[index].unitPrice = product.selling_price;
       }
     }
 
-    if (field === 'quantity' || field === 'unitPrice') {
-      updatedItems[index].total = updatedItems[index].quantity * updatedItems[index].unitPrice;
+    // Recalculate total when quantity, unitPrice, or taxRate changes
+    if (field === 'quantity' || field === 'unitPrice' || field === 'productId' || field === 'taxRate') {
+      const subtotal = updatedItems[index].quantity * updatedItems[index].unitPrice;
+      updatedItems[index].total = subtotal;
     }
 
     setItems(updatedItems);
@@ -80,12 +147,12 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
 
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-    const tax = subtotal * (formData.taxRate / 100);
+    const tax = items.reduce((sum, item) => sum + (item.total * item.taxRate), 0);
     const total = subtotal + tax;
     return { subtotal, tax, total };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.customerId || items.length === 0) {
@@ -93,62 +160,99 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       return;
     }
 
-    const { subtotal, tax, total } = calculateTotals();
+    if (!formData.salesPersonId) {
+      alert('Please select a sales person.');
+      return;
+    }
 
-    const quotationData: Partial<Quotation> = {
-      ...formData,
-      customerId: formData.customerId,
-      customerName: selectedCustomer?.name || '',
-      customerEmail: selectedCustomer?.email || '',
-      customerAddress: selectedCustomer?.address || '',
-      items,
-      subtotal,
-      tax,
-      total,
-    };
+    // Validate that all items have products selected
+    const hasEmptyProducts = items.some(item => !item.productId);
+    if (hasEmptyProducts) {
+      alert('Please select a product for all line items.');
+      return;
+    }
 
-    onSave(quotationData);
+    setSaving(true);
+    try {
+      // Prepare request data in the format expected by the API
+      const requestData = {
+        customer_id: parseInt(formData.customerId),
+        sales_person_id: parseInt(formData.salesPersonId),
+        date: formData.date,
+        valid_until: formData.validUntil || null,
+        notes: formData.notes,
+        items: items.map(item => ({
+          product_id: parseInt(item.productId),
+          quantity: item.quantity,
+          price: item.unitPrice, // API expects 'price', not 'unitPrice'
+          tax_rate: item.taxRate, // API expects 'tax_rate', not 'taxRate'
+        }))
+      };
+
+      let response;
+      if (quotation) {
+        // Update existing quotation
+        response = await fetch(`http://127.0.0.1:8000/api/v1/quotations/${quotation.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+      } else {
+        // Create new quotation
+        response = await fetch('http://127.0.0.1:8000/api/v1/quotations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+        });
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to save quotation');
+      }
+
+      const savedQuotation = await response.json();
+      
+      // Call the parent's onSave callback with the saved data
+      onSave(savedQuotation);
+      
+    } catch (err) {
+      console.error('Error saving quotation:', err);
+      alert(`Error saving quotation: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const { subtotal, tax, total } = calculateTotals();
+
+  if (loading) return <div>Loading data...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="customerId">Customer *</Label>
-          <Select value={formData.customerId} onValueChange={(value) => setFormData({ ...formData, customerId: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a customer" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  {customer.name} - {customer.company}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            options={customers.map(customer => ({
+              value: customer.id,
+              label: customer.name,
+              description: customer.contact_person || ''
+            }))}
+            value={formData.customerId}
+            onValueChange={(value) => setFormData({ ...formData, customerId: value })}
+            placeholder="Select a customer"
+            searchPlaceholder="Search customers..."
+            emptyText="No customers found."
+          />
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value: Quotation['status']) => setFormData({ ...formData, status: value })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="date">Date *</Label>
+          <Label htmlFor="date">Quotation Date *</Label>
           <Input
             id="date"
             type="date"
@@ -157,15 +261,30 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
             required
           />
         </div>
+      </div>
 
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="validUntil">Valid Until *</Label>
+          <Label htmlFor="salesPersonId">Sales Person *</Label>
+          <Combobox
+            options={salesPersons.map(salesPerson => ({
+              value: salesPerson.id,
+              label: salesPerson.name,
+            }))}
+            value={formData.salesPersonId}
+            onValueChange={(value) => setFormData({ ...formData, salesPersonId: value })}
+            placeholder="Select a sales person"
+            searchPlaceholder="Search sales persons..."
+            emptyText="No sales persons found."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="validUntil">Valid Until</Label>
           <Input
             id="validUntil"
             type="date"
             value={formData.validUntil}
             onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
-            required
           />
         </div>
       </div>
@@ -177,7 +296,8 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
           </CardHeader>
           <CardContent className="text-sm">
             <p><strong>{selectedCustomer.name}</strong></p>
-            <p>{selectedCustomer.company}</p>
+            <p>{selectedCustomer.contact_person}</p>
+            <p>{selectedCustomer.phone}</p>
             <p>{selectedCustomer.email}</p>
             <p>{selectedCustomer.address}</p>
           </CardContent>
@@ -204,48 +324,35 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>Description</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Unit Price</TableHead>
+                  <TableHead>Tax</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((item, index) => (
-                  <TableRow key={item.id}>
+                  <TableRow key={item.tempId}>
                     <TableCell>
-                      <Select 
-                        value={item.productId} 
+                      <Combobox
+                        options={productOptions}
+                        value={item.productId}
                         onValueChange={(value) => updateItem(index, 'productId', value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select product" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={item.description}
-                        onChange={(e) => updateItem(index, 'description', e.target.value)}
-                        placeholder="Item description"
+                        placeholder="Select product"
+                        searchPlaceholder="Search products..."
+                        emptyText="No products found."
+                        className="w-full"
                       />
                     </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1"
                         value={item.quantity}
                         onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="w-20"
+                        className="w-18"
                       />
                     </TableCell>
                     <TableCell>
@@ -254,12 +361,31 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                         min="0"
                         step="0.01"
                         value={item.unitPrice}
-                        onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        onChange={(e) =>
+                          updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)
+                        }
                         className="w-24"
                       />
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">${item.total.toFixed(2)}</span>
+                      <div className="relative w-22">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.taxRate * 100}
+                          onChange={(e) =>
+                            updateItem(index, 'taxRate', parseFloat(e.target.value) / 100 || 0)
+                          }
+                          className="pr-6"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                          %
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">₱{item.total.toFixed(2)}</span>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -280,30 +406,19 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       </Card>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="taxRate">Tax Rate (%)</Label>
-          <Input
-            id="taxRate"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            value={formData.taxRate}
-            onChange={(e) => setFormData({ ...formData, taxRate: parseFloat(e.target.value) || 0 })}
-          />
-        </div>
+        <div className="space-y-2"></div>
         <div className="space-y-4">
           <div className="flex justify-between">
             <span>Subtotal:</span>
-            <span className="font-medium">${subtotal.toFixed(2)}</span>
+            <span className="font-medium">₱ {subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
-            <span>Tax ({formData.taxRate}%):</span>
-            <span className="font-medium">${tax.toFixed(2)}</span>
+            <span>Tax:</span>
+            <span className="font-medium">₱ {tax.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-lg font-bold">
             <span>Total:</span>
-            <span>${total.toFixed(2)}</span>
+            <span>₱ {total.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -312,7 +427,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
         <Label htmlFor="notes">Notes</Label>
         <Textarea
           id="notes"
-          placeholder="Additional notes or terms..."
+          placeholder="Additional notes or terms and conditions..."
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           rows={3}
@@ -320,11 +435,11 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       </div>
 
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button type="submit">
-          {quotation ? 'Update' : 'Create'} Quotation
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Saving...' : (quotation ? 'Update' : 'Create')} Quotation
         </Button>
       </div>
     </form>

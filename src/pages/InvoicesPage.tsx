@@ -119,8 +119,8 @@ export default function InvoicesPage() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      unpaid: 'secondary',
-      partial: 'default',
+      unpaid: 'destructive',
+      partial: 'secondary',
       paid: 'success',
       overdue: 'destructive',
       cancelled: 'outline',

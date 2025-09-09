@@ -15,6 +15,8 @@ import RecordPaymentDialog from '../components/forms/RecordPaymentDialog';
 import CreateShipmentDialog from '../components/forms/CreateShipmentDialog';
 import { Input } from '@/components/ui/input';
 
+
+
 // API functions
 const fetchSalesOrders = async (): Promise<SalesOrder[]> => {
   const response = await fetch('http://127.0.0.1:8000/api/v1/sales-orders');
@@ -200,53 +202,53 @@ export default function SalesOrdersPage() {
     }
   };
 
-  const handleCreateFromQuotation = async (quotationId: string) => {
-    try {
-      const quotationsResponse = await fetch('http://127.0.0.1:8000/api/v1/quotations');
-      if (!quotationsResponse.ok) {
-        throw new Error('Failed to fetch quotations');
-      }
-      const quotations = await quotationsResponse.json();
-      const quotation = quotations.find((q: Quotation) => q.id === quotationId);
+  // const handleCreateFromQuotation = async (quotationId: string) => {
+  //   try {
+  //     const quotationsResponse = await fetch('http://127.0.0.1:8000/api/v1/quotations');
+  //     if (!quotationsResponse.ok) {
+  //       throw new Error('Failed to fetch quotations');
+  //     }
+  //     const quotations = await quotationsResponse.json();
+  //     const quotation = quotations.find((q: Quotation) => q.id === quotationId);
 
-      if (quotation) {
-        const salesOrderData = {
-          customerId: quotation.customerId,
-          quotationId: quotation.id,
-          date: new Date().toISOString().split('T')[0],
-          deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          items: quotation.items,
-          subtotal: quotation.subtotal,
-          tax: quotation.tax,
-          taxRate: quotation.taxRate,
-          total: quotation.total,
-          invoiceStatus: 'not_invoiced' as const,
-          paymentStatus: 'unpaid' as const,
-          shipmentStatus: 'not_shipped' as const,
-          notes: quotation.notes,
-        };
+  //     if (quotation) {
+  //       const salesOrderData = {
+  //         customerId: quotation.customerId,
+  //         quotationId: quotation.id,
+  //         date: new Date().toISOString().split('T')[0],
+  //         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  //         items: quotation.items,
+  //         subtotal: quotation.subtotal,
+  //         tax: quotation.tax,
+  //         taxRate: quotation.taxRate,
+  //         total: quotation.total,
+  //         invoiceStatus: 'not_invoiced' as const,
+  //         paymentStatus: 'unpaid' as const,
+  //         shipmentStatus: 'not_shipped' as const,
+  //         notes: quotation.notes,
+  //       };
 
-        const response = await fetch('http://127.0.0.1:8000/api/v1/sales-orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(salesOrderData),
-        });
+  //       const response = await fetch('http://127.0.0.1:8000/api/v1/sales-orders', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify(salesOrderData),
+  //       });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || 'Failed to create sales order from quotation');
-        }
+  //       if (!response.ok) {
+  //         const errorData = await response.json();
+  //         throw new Error(errorData.detail || 'Failed to create sales order from quotation');
+  //       }
 
-        await loadSalesOrders();
-        toast.success('Sales order created from quotation successfully');
-      }
-    } catch (error) {
-      console.error('Error creating sales order from quotation:', error);
-      toast.error('Failed to create sales order from quotation');
-    }
-  };
+  //       await loadSalesOrders();
+  //       toast.success('Sales order created from quotation successfully');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating sales order from quotation:', error);
+  //     toast.error('Failed to create sales order from quotation');
+  //   }
+  // };
 
   const getInvoiceStatusBadgeVariant = (invoiceStatus: string) => {
     switch (invoiceStatus) {

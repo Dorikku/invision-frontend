@@ -223,9 +223,9 @@ export default function SalesOrderView({
                   )}
                 </div>
                 <div className="col-span-2">{item.quantity}</div>
-                <div className="col-span-2">₱ {item.unitPrice.toFixed(2)}</div>
+                <div className="col-span-2">₱ {item.unitPrice}</div>
                 <div className="col-span-2">{item.taxRate * 100}%</div>
-                <div className="col-span-2 text-right">₱ {item.total.toFixed(2)}</div>
+                <div className="col-span-2 text-right">₱ {item.total}</div>
               </div>
             ))}
           </div>

@@ -1,12 +1,12 @@
-export interface Customer {
-  id: string; 
-  name: string;
-  contact_person?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  customer_since?: string; // Changed to string to match datetime in backend
-}
+// export interface Customer {
+//   id: string; 
+//   name: string;
+//   contact_person?: string;
+//   email?: string;
+//   phone?: string;
+//   address?: string;
+//   customer_since?: string; // Changed to string to match datetime in backend
+// }
 
 export interface SalesPerson {
   id: string;
@@ -54,23 +54,25 @@ export interface LineItem {
 }
 
 export interface Quotation extends Record<string, unknown> {
-  id: string;
+  id: number;
   quotationNumber: string;
   customerId: string;
   customerName: string;
-  customerEmail: string;
-  customerAddress: string;
-  date: string;
-  validUntil: string;
-  items: LineItem[];
+  customerContactPerson: string | null;
+  customerEmail: string | null;
+  customerAddress: string | null;
+  salesPersonId: string | null;
+  salesPersonName: string | null;
+  date: Date; 
+  validUntil: Date | null; 
+  status: "open" | "accepted" | "rejected" | "expired";
   subtotal: number;
   tax: number;
-  taxRate: number;
   total: number;
-  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
-  notes: string;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
+  items: LineItem[];
 }
 
 export interface SalesOrder extends Record<string, unknown> {
@@ -148,4 +150,50 @@ export interface Payment {
   reference?: string;
   notes?: string;
   document?: string;  // URL or path to receipt
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  contact_person: string | null;
+  status: string;
+  customer_since: string;
+  total_orders: number;
+  total_spent: number;
+  average_order_value: number;
+  has_unpaid_invoices: boolean;
+  avatar: string;
+}
+
+export interface ActiveOrder {
+  id: string;
+  order_number: string;
+  po_number: string;
+  date: string;
+  invoice_status: string;
+  payment_status: string;
+  shipment_status: string;
+  total: number;
+}
+
+export interface OrderHistoryItem {
+  id: string;
+  order_number: string;
+  date: string;
+  items: {
+    id: string;
+    productId: string;
+    productName: string;
+    description?: string | null;
+    quantity: number;
+    unitCost: number;
+    unitPrice: number;
+    total: number;
+    taxRate: number;
+    shippedQuantity: number;
+  }[];
+  total: number;
 }

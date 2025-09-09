@@ -15,9 +15,8 @@ interface QuotationViewProps {
 export default function QuotationView({ quotation, onClose, onEdit }: QuotationViewProps) {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'draft': return 'secondary';
-      case 'sent': return 'outline';
-      case 'accepted': return 'default';
+      case 'open': return 'primary';
+      case 'accepted': return 'success';
       case 'rejected': return 'destructive';
       case 'expired': return 'destructive';
       default: return 'secondary';
@@ -66,10 +65,12 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
               <span className="font-medium">Date:</span>
               <span className="ml-2">{new Date(quotation.date).toLocaleDateString()}</span>
             </div>
-            <div>
+            {quotation.validUntil && (
+              <div>
               <span className="font-medium">Valid Until:</span>
               <span className="ml-2">{new Date(quotation.validUntil).toLocaleDateString()}</span>
-            </div>
+              </div>
+            )}
             <div>
               <span className="font-medium">Status:</span>
               <Badge variant={getStatusBadgeVariant(quotation.status)} className="ml-2">
@@ -87,6 +88,10 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
             <div>
               <span className="font-medium">Name:</span>
               <span className="ml-2">{quotation.customerName}</span>
+            </div>
+            <div>
+              <span className="font-medium">Contact Person:</span>{' '}
+              {quotation.customerContactPerson}
             </div>
             <div>
               <span className="font-medium">Email:</span>
@@ -126,8 +131,8 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
                     </div>
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell className="text-right font-medium">${item.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">₱{item.unitPrice}</TableCell>
+                  <TableCell className="text-right font-medium">₱{item.total}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -139,16 +144,16 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
             <div className="w-64 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${quotation.subtotal.toFixed(2)}</span>
+                <span>₱{quotation.subtotal}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax ({quotation.taxRate}%):</span>
-                <span>${quotation.tax.toFixed(2)}</span>
+                <span>Tax:</span>
+                <span>₱{quotation.tax}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>${quotation.total.toFixed(2)}</span>
+                <span>₱{quotation.total}</span>
               </div>
             </div>
           </div>
