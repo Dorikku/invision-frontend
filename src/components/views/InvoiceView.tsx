@@ -41,10 +41,14 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
           <Badge variant={getStatusBadgeVariant(invoice.status)}>
             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
           </Badge>
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <Button variant="outline" size="sm">
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
+          {/* <Button variant="outline" size="sm" onClick={onEdit}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button> */}
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Download className="mr-2 h-4 w-4" />
             Print
@@ -117,6 +121,7 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead className="text-right">Tax</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -131,6 +136,7 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">₱{item.unitPrice}</TableCell>
+                  <TableCell className="text-right">{item.taxRate * 100}%</TableCell>
                   <TableCell className="text-right font-medium">₱{item.total}</TableCell>
                 </TableRow>
               ))}

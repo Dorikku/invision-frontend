@@ -92,7 +92,8 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleEditPurchaseOrder = (po: PurchaseOrder) => {
-    setEditingPurchaseOrder(po);
+    // setEditingPurchaseOrder(po);
+    setSelectedPO(po);
     setIsFormOpen(true);
   };
 
@@ -295,6 +296,7 @@ export default function PurchaseOrdersPage() {
               onEdit={() => {
                 setIsViewOpen(false);
                 handleEditPurchaseOrder(selectedPurchaseOrder);
+                setShowForm(true);
               }}
               onReceive={() => {
                 toast.info("Receive items placeholder");

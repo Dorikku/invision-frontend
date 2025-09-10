@@ -118,6 +118,7 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead className="text-right">Tax</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -132,6 +133,7 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
                   <TableCell className="text-right">₱{item.unitPrice}</TableCell>
+                  <TableCell className="text-right">{item.taxRate * 100}%</TableCell>
                   <TableCell className="text-right font-medium">₱{item.total}</TableCell>
                 </TableRow>
               ))}

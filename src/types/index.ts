@@ -197,8 +197,8 @@ export interface Customer {
   avatar: string;
 }
 
-export type Supplier = {
-  id: number | string;
+export type SimpleSupplier = {
+  id: number;
   name: string;
   contact_person?: string | null;
   email?: string | null;
@@ -206,6 +206,24 @@ export type Supplier = {
   address?: string | null;
   status?: string | null;
 };
+
+export interface Supplier {
+  id: number;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  contact_person?: string | null;
+  status: "Preferred" | "Active" | "Inactive" | "New";
+  supplier_since: string; // ISO date string
+
+  // Computed fields from backend
+  total_purchase_orders: number;
+  total_spent: number;
+  average_order_value: number;
+  has_pending_receipts: boolean;
+  avatar: string;
+}
 
 export interface ActiveOrder {
   id: string;
@@ -234,5 +252,23 @@ export interface OrderHistoryItem {
     taxRate: number;
     shippedQuantity: number;
   }[];
+  total: number;
+}
+
+// PURCHASE ORDER INTERFACES
+export interface ActivePurchaseOrder {
+  id: number;
+  po_number: string;
+  date: string; // ISO date string
+  status: string; // e.g. "pending", "partially_received", "fully_received"
+  total: number;
+  total_received_quantity: number;
+  total_ordered_quantity: number;
+}
+
+export interface PurchaseOrderHistoryItem {
+  id: number;
+  po_number: string;
+  date: string; // ISO date string
   total: number;
 }

@@ -184,10 +184,14 @@ export default function InvoicesPage() {
           <Eye className="mr-2 h-4 w-4" />
           View
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEditInvoice(invoice)}>
+        <DropdownMenuItem>
           <Edit className="mr-2 h-4 w-4" />
           Edit
         </DropdownMenuItem>
+        {/* <DropdownMenuItem onClick={() => handleEditInvoice(invoice)}>
+          <Edit className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem> */}
         <DropdownMenuItem 
           onClick={() => handleSendInvoice(invoice)}
           // disabled={invoice.status === 'sent' || invoice.status === 'paid'}
@@ -227,7 +231,11 @@ export default function InvoicesPage() {
             Manage your invoices and billing
           </p>
         </div>
-        <Button onClick={handleCreateInvoice}>
+        {/* <Button onClick={handleCreateInvoice}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Invoice
+        </Button> */}
+        <Button>
           <Plus className="mr-2 h-4 w-4" />
           New Invoice
         </Button>

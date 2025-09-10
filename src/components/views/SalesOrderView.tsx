@@ -208,9 +208,9 @@ export default function SalesOrderView({
           <div className="space-y-4">
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
               <div className="col-span-4">Item</div>
-              <div className="col-span-2">Quantity</div>
-              <div className="col-span-2">Unit Price</div>
-              <div className="col-span-2">Tax</div>
+              <div className="col-span-2 text-right">Quantity</div>
+              <div className="col-span-2 text-right">Unit Price</div>
+              <div className="col-span-2 text-right">Tax</div>
               <div className="col-span-2 text-right">Total</div>
             </div>
             <Separator />
@@ -222,9 +222,9 @@ export default function SalesOrderView({
                     <div className="text-muted-foreground">{item.description}</div>
                   )}
                 </div>
-                <div className="col-span-2">{item.quantity}</div>
-                <div className="col-span-2">₱ {item.unitPrice}</div>
-                <div className="col-span-2">{item.taxRate * 100}%</div>
+                <div className="col-span-2 text-right">{item.quantity}</div>
+                <div className="col-span-2 text-right">₱ {item.unitPrice}</div>
+                <div className="col-span-2 text-right">{item.taxRate * 100}%</div>
                 <div className="col-span-2 text-right">₱ {item.total}</div>
               </div>
             ))}

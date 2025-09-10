@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Combobox } from "../ui/combobox";
-import type { Supplier } from "@/types";
+import type { SimpleSupplier } from "@/types";
 
 type Product = {
   id: number | string;
@@ -84,7 +84,7 @@ export default function PurchaseOrderForm({
   onSave,
   onCancel,
 }: PurchaseOrderFormProps) {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [suppliers, setSuppliers] = useState<SimpleSupplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -7,6 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Plus, Search, Filter, AlertTriangle, Edit } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Customer, ActiveOrder, OrderHistoryItem } from "@/types";
+import CustomerForm from "@/components/forms/CustomerForm";
+import { toast } from "@/components/ui/sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 
 // ---------------- API Calls ----------------
@@ -104,6 +107,9 @@ const CustomersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -142,6 +148,36 @@ const CustomersPage = () => {
       (c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
   );
 
+  const handleAddCustomer = () => {
+    setEditingCustomer(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setIsFormOpen(true);
+  };
+
+  const handleSaveCustomer = async (savedCustomer: Customer) => {
+    try {
+      // Refresh customers list
+      const data = await fetchCustomers();
+      setCustomers(data);
+
+      // Keep the newly saved customer selected
+      setSelectedCustomer(savedCustomer);
+
+      setIsFormOpen(false);
+      setEditingCustomer(null);
+    } catch (error) {
+      console.error("Error refreshing customers:", error);
+      toast.error("Failed to refresh customers");
+    }
+  };
+ 
+
+
+
   return (
     <ScrollArea>
       <div className="flex h-screen">
@@ -150,7 +186,7 @@ const CustomersPage = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-semibold text-gray-800">Customers</h1>
-              <Button size="sm" variant="outline" className="gap-1">
+              <Button size="sm" variant="outline" className="gap-1" onClick={handleAddCustomer}>
                 <Plus className="h-4 w-4" />
                 Add Customer
               </Button>
@@ -261,7 +297,7 @@ const CustomersPage = () => {
                       >
                         {derivedCustomerStatus(selectedCustomer)}
                       </Badge>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm"onClick={() => handleEditCustomer(selectedCustomer)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
@@ -448,6 +484,26 @@ const CustomersPage = () => {
           )}
         </ScrollArea>
       </div>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCustomer ? "Edit Customer" : "Create New Customer"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingCustomer
+                ? "Update the customer details below."
+                : "Fill in the details to create a new customer."}
+            </DialogDescription>
+          </DialogHeader>
+          <CustomerForm
+            customer={editingCustomer}
+            onSave={handleSaveCustomer}
+            onCancel={() => setIsFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+            
     </ScrollArea>
   );
 };
