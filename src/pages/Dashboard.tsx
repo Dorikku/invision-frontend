@@ -57,22 +57,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-1">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      <div className="max-w-full mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
           <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
-            <Button 
-              variant="outline" 
-              className="w-full sm:w-auto text-sm sm:text-base"
-              size="sm"
-            >
+            <Button variant="outline">
               Generate Sales Report
             </Button>
-            <Button 
-              className="w-full sm:w-auto text-sm sm:text-base"
-              size="sm"
-            >
+            <Button>
               + Add New Order
             </Button>
           </div>
