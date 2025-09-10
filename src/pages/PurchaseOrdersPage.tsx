@@ -268,9 +268,14 @@ export default function PurchaseOrdersPage() {
           </DialogHeader>
           <PurchaseOrderForm
             purchaseOrder={selectedPO}
-            onSave={(savedPO) => {
+            onSave={async (savedPO) => {
               setShowForm(false);
-              fetchPurchaseOrders();
+              await loadPurchaseOrders();
+              toast.success(
+                savedPO.id
+                  ? "Purchase order updated successfully"
+                  : "Purchase order created successfully"
+              );
             }}
             onCancel={() => setShowForm(false)}
           />
