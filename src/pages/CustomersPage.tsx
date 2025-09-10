@@ -123,8 +123,8 @@ const CustomersPage = () => {
     const loadOrders = async () => {
       try {
         const [active, history] = await Promise.all([
-          fetchActiveOrders(selectedCustomer.id),
-          fetchOrderHistory(selectedCustomer.id),
+          fetchActiveOrders(Number(selectedCustomer.id)),
+          fetchOrderHistory(Number(selectedCustomer.id)),
         ]);
         setActiveOrders(active);
         setOrderHistory(history);

@@ -1,29 +1,94 @@
-import { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Copy, Trash2, CheckCircle } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { DataTable } from '../components/ui/data-table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import { getPurchaseOrders, savePurchaseOrders, updateCounter } from '../lib/storage';
-import type { PurchaseOrder } from '../types';
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Package,
+  Search,
+} from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { DataTable } from "../components/ui/data-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+
+// Types
+export interface PurchaseOrder extends Record<string, unknown> {
+  id: number;
+  poNumber: string;
+  supplierName: string;
+  date: string;
+  status: string;
+  total: number;
+}
+
+// API functions
+const fetchPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
+  const response = await fetch("http://127.0.0.1:8000/api/v1/purchase-orders");
+  if (!response.ok) throw new Error("Failed to fetch purchase orders");
+  return response.json();
+};
+
+const fetchPurchaseOrder = async (id: number): Promise<PurchaseOrder> => {
+  const response = await fetch(
+    `http://127.0.0.1:8000/api/v1/purchase-orders/${id}`
+  );
+  if (!response.ok) throw new Error("Failed to fetch purchase order");
+  return response.json();
+};
+
+const deletePurchaseOrder = async (id: number): Promise<void> => {
+  const response = await fetch(
+    `http://127.0.0.1:8000/api/v1/purchase-orders/${id}`,
+    { method: "DELETE" }
+  );
+  if (!response.ok) throw new Error("Failed to delete purchase order");
+};
 
 export default function PurchaseOrdersPage() {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
-  const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<PurchaseOrder | null>(null);
+  const [selectedPurchaseOrder, setSelectedPurchaseOrder] =
+    useState<PurchaseOrder | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [editingPurchaseOrder, setEditingPurchaseOrder] = useState<PurchaseOrder | null>(null);
+  const [editingPurchaseOrder, setEditingPurchaseOrder] =
+    useState<PurchaseOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [purchaseOrderToDelete, setPurchaseOrderToDelete] =
+    useState<PurchaseOrder | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     loadPurchaseOrders();
   }, []);
 
-  const loadPurchaseOrders = () => {
-    const data = getPurchaseOrders();
-    setPurchaseOrders(data);
+  const loadPurchaseOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchPurchaseOrders();
+      setPurchaseOrders(data);
+    } catch (error) {
+      console.error("Error loading purchase orders:", error);
+      toast.error("Failed to load purchase orders");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreatePurchaseOrder = () => {
@@ -31,195 +96,135 @@ export default function PurchaseOrdersPage() {
     setIsFormOpen(true);
   };
 
-  const handleEditPurchaseOrder = (purchaseOrder: PurchaseOrder) => {
-    setEditingPurchaseOrder(purchaseOrder);
+  const handleEditPurchaseOrder = (po: PurchaseOrder) => {
+    setEditingPurchaseOrder(po);
     setIsFormOpen(true);
   };
 
-  const handleViewPurchaseOrder = (purchaseOrder: PurchaseOrder) => {
-    setSelectedPurchaseOrder(purchaseOrder);
+  const handleViewPurchaseOrder = (po: PurchaseOrder) => {
+    setSelectedPurchaseOrder(po);
     setIsViewOpen(true);
   };
 
-  const handleDuplicatePurchaseOrder = (purchaseOrder: PurchaseOrder) => {
-    const newPurchaseOrder: PurchaseOrder = {
-      ...purchaseOrder,
-      id: Date.now().toString(),
-      poNumber: updateCounter('purchaseOrder'),
-      status: 'draft',
-      date: new Date().toISOString().split('T')[0],
-      deliveryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const allPurchaseOrders = getPurchaseOrders();
-    const updatedPurchaseOrders = [newPurchaseOrder, ...allPurchaseOrders];
-    savePurchaseOrders(updatedPurchaseOrders);
-    loadPurchaseOrders();
-    toast.success('Purchase order duplicated successfully');
+  const handleDeletePurchaseOrder = (po: PurchaseOrder) => {
+    setPurchaseOrderToDelete(po);
+    setDeleteDialogOpen(true);
   };
 
-  const handleDeletePurchaseOrder = (purchaseOrder: PurchaseOrder) => {
-    if (window.confirm('Are you sure you want to delete this purchase order?')) {
-      const allPurchaseOrders = getPurchaseOrders();
-      const updatedPurchaseOrders = allPurchaseOrders.filter(po => po.id !== purchaseOrder.id);
-      savePurchaseOrders(updatedPurchaseOrders);
-      loadPurchaseOrders();
-      toast.success('Purchase order deleted successfully');
-    }
-  };
-
-  const handleStatusChange = (purchaseOrder: PurchaseOrder, newStatus: PurchaseOrder['status']) => {
-    const allPurchaseOrders = getPurchaseOrders();
-    const updatedPurchaseOrders = allPurchaseOrders.map(po => 
-      po.id === purchaseOrder.id 
-        ? { ...po, status: newStatus, updatedAt: new Date().toISOString() }
-        : po
-    );
-    savePurchaseOrders(updatedPurchaseOrders);
-    loadPurchaseOrders();
-    toast.success(`Purchase order status updated to ${newStatus}`);
-  };
-
-  const handleSavePurchaseOrder = (purchaseOrderData: Partial<PurchaseOrder>) => {
-    const allPurchaseOrders = getPurchaseOrders();
-    
-    if (editingPurchaseOrder) {
-      const updatedPurchaseOrders = allPurchaseOrders.map(po =>
-        po.id === editingPurchaseOrder.id
-          ? { ...po, ...purchaseOrderData, updatedAt: new Date().toISOString() }
-          : po
-      );
-      savePurchaseOrders(updatedPurchaseOrders);
-      toast.success('Purchase order updated successfully');
-    } else {
-      const newPurchaseOrder: PurchaseOrder = {
-        id: Date.now().toString(),
-        poNumber: updateCounter('purchaseOrder'),
-        ...purchaseOrderData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as PurchaseOrder;
-      
-      const updatedPurchaseOrders = [newPurchaseOrder, ...allPurchaseOrders];
-      savePurchaseOrders(updatedPurchaseOrders);
-      toast.success('Purchase order created successfully');
-    }
-    
-    loadPurchaseOrders();
-    setIsFormOpen(false);
-    setEditingPurchaseOrder(null);
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'draft': return 'secondary';
-      case 'sent': return 'outline';
-      case 'confirmed': return 'default';
-      case 'received': return 'default';
-      case 'cancelled': return 'destructive';
-      default: return 'secondary';
+  const confirmDeletePurchaseOrder = async () => {
+    if (!purchaseOrderToDelete) return;
+    try {
+      await deletePurchaseOrder(purchaseOrderToDelete.id);
+      await loadPurchaseOrders();
+      toast.success("Purchase order deleted successfully");
+    } catch (error) {
+      console.error("Error deleting purchase order:", error);
+      toast.error("Failed to delete purchase order");
+    } finally {
+      setDeleteDialogOpen(false);
+      setPurchaseOrderToDelete(null);
     }
   };
 
   const columns = [
+    { key: "poNumber", label: "PO #", sortable: true },
+    { key: "supplierName", label: "Supplier", sortable: true },
     {
-      key: 'poNumber',
-      label: 'PO Number',
-      sortable: true,
-    },
-    {
-      key: 'supplierName',
-      label: 'Supplier',
-      sortable: true,
-    },
-    {
-      key: 'date',
-      label: 'Order Date',
+      key: "date",
+      label: "Date",
       sortable: true,
       render: (value: string) => new Date(value).toLocaleDateString(),
     },
     {
-      key: 'deliveryDate',
-      label: 'Delivery Date',
-      sortable: true,
-      render: (value: string) => new Date(value).toLocaleDateString(),
-    },
-    {
-      key: 'total',
-      label: 'Total',
-      sortable: true,
-      render: (value: number) => `$${value.toFixed(2)}`,
-    },
-    {
-      key: 'status',
-      label: 'Status',
+      key: "status",
+      label: "Status",
       sortable: true,
       render: (value: string) => (
-        <Badge variant={getStatusBadgeVariant(value)}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </Badge>
+        <Badge variant="secondary">{value}</Badge>
       ),
+    },
+    {
+      key: "total",
+      label: "Total",
+      sortable: true,
+      render: (value: number) => `₱ ${value.toFixed(2)}`,
     },
   ];
 
-  const getActionItems = (purchaseOrder: PurchaseOrder) => (
+  const getActionItems = (po: PurchaseOrder) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">
-          Actions
+        <Button
+          variant="ghost"
+          size="sm"
+          className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={4}
+              d="M5 12h.01M12 12h.01M19 12h.01"
+            />
+          </svg>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleViewPurchaseOrder(purchaseOrder)}>
-          <Eye className="mr-2 h-4 w-4" />
-          View
+        <DropdownMenuItem onClick={() => handleViewPurchaseOrder(po)}>
+          <Eye className="mr-2 h-4 w-4" /> View
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEditPurchaseOrder(purchaseOrder)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
+        <DropdownMenuItem onClick={() => handleEditPurchaseOrder(po)}>
+          <Edit className="mr-2 h-4 w-4" /> Edit
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleDuplicatePurchaseOrder(purchaseOrder)}>
-          <Copy className="mr-2 h-4 w-4" />
-          Duplicate
+        <DropdownMenuItem onClick={() => toast.info("Receive items placeholder")}>
+          <Package className="mr-2 h-4 w-4" /> Receive Items
         </DropdownMenuItem>
-        {purchaseOrder.status === 'draft' && (
-          <DropdownMenuItem onClick={() => handleStatusChange(purchaseOrder, 'sent')}>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Send to Supplier
-          </DropdownMenuItem>
-        )}
-        {purchaseOrder.status === 'sent' && (
-          <DropdownMenuItem onClick={() => handleStatusChange(purchaseOrder, 'confirmed')}>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Mark as Confirmed
-          </DropdownMenuItem>
-        )}
-        {purchaseOrder.status === 'confirmed' && (
-          <DropdownMenuItem onClick={() => handleStatusChange(purchaseOrder, 'received')}>
-            <CheckCircle className="mr-2 h-4 w-4" />
-            Mark as Received
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem 
-          onClick={() => handleDeletePurchaseOrder(purchaseOrder)}
+        <DropdownMenuItem
+          onClick={() => handleDeletePurchaseOrder(po)}
           className="text-red-600"
         >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          <Trash2 className="mr-2 h-4 w-4" /> Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Purchase Orders
+            </h1>
+            <p className="text-muted-foreground">
+              Manage your purchase orders and track receipts
+            </p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex items-center justify-center h-32">
+            <div>Loading purchase orders...</div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Purchase Orders
+          </h1>
           <p className="text-muted-foreground">
-            Manage your purchase orders and supplier relationships
+            Manage your purchase orders and track receipts
           </p>
         </div>
         <Button onClick={handleCreatePurchaseOrder}>
@@ -229,22 +234,91 @@ export default function PurchaseOrdersPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          {/* <CardTitle>All Purchase Orders</CardTitle>
-          <CardDescription>
-            A list of all your purchase orders and their current status.
-          </CardDescription> */}
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="relative w-[250px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search purchase orders..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
           <DataTable
             data={purchaseOrders}
             columns={columns}
-            searchPlaceholder="Search purchase orders..."
+            searchTerm={searchTerm}
             onRowClick={handleViewPurchaseOrder}
             actions={getActionItems}
           />
         </CardContent>
       </Card>
+
+      {/* Form Dialog Skeleton */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingPurchaseOrder
+                ? "Edit Purchase Order"
+                : "Create New Purchase Order"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingPurchaseOrder
+                ? "Update the purchase order details below."
+                : "Fill in the details to create a new purchase order."}
+            </DialogDescription>
+          </DialogHeader>
+          {/* ⏳ Placeholder for PurchaseOrderForm */}
+          <div className="p-6 text-center text-muted-foreground">
+            Form goes here...
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog Skeleton */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Purchase Order Details</DialogTitle>
+          </DialogHeader>
+          {selectedPurchaseOrder && (
+            <div className="p-6 text-center text-muted-foreground">
+              View details for{" "}
+              <span className="font-semibold">
+                {selectedPurchaseOrder.poNumber}
+              </span>{" "}
+              goes here...
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Purchase Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {purchaseOrderToDelete?.poNumber}
+              </span>
+              ? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeletePurchaseOrder}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
