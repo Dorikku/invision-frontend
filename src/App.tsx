@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { ScrollArea } from './components/ui/scroll-area';
@@ -21,8 +21,22 @@ import NotFound from './pages/NotFound';
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   useEffect(() => {
     initializeSampleData();
+  }, []);
+
+  // Close sidebar when screen size changes to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
@@ -31,25 +45,27 @@ const App = () => {
         <Toaster />
         <BrowserRouter basename="/invision-frontend">
           <div className="flex h-screen bg-gray-50">
-            <Sidebar />
-            <ScrollArea className="flex flex-1 flex-col overflow-hidden">
+            <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+            <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">
               <Header />
-              <main className="flex-1 overflow-auto p-6">
-                <Routes>
-                  <Route index element={<Dashboard />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/quotations" element={<QuotationsPage />} />
-                  <Route path="/sales-orders" element={<SalesOrdersPage />} />
-                  <Route path="/invoices" element={<InvoicesPage />} />
-                  <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-                  <Route path="/customers" element={<CustomersPage />} />
-                  <Route path="/suppliers" element={<SuppliersPage />} />
-                  <Route path="/products" element={<ProductsPage />} />
-                  <Route path="/reports" element={<ReportsPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-            </ScrollArea>
+              <ScrollArea className="flex-1">
+                <main className="p-6">
+                  <Routes>
+                    <Route index element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/quotations" element={<QuotationsPage />} />
+                    <Route path="/sales-orders" element={<SalesOrdersPage />} />
+                    <Route path="/invoices" element={<InvoicesPage />} />
+                    <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                    <Route path="/customers" element={<CustomersPage />} />
+                    <Route path="/suppliers" element={<SuppliersPage />} />
+                    <Route path="/products" element={<ProductsPage />} />
+                    <Route path="/reports" element={<ReportsPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </main>
+              </ScrollArea>
+            </div>
           </div>
         </BrowserRouter>
       </TooltipProvider>
