@@ -26,6 +26,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import PurchaseOrderForm from '../components/forms/PurchaseOrderForm';
 
 // Types
 export interface PurchaseOrder extends Record<string, unknown> {
@@ -73,6 +74,10 @@ export default function PurchaseOrdersPage() {
   const [purchaseOrderToDelete, setPurchaseOrderToDelete] =
     useState<PurchaseOrder | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPO, setSelectedPO] = useState<any | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+
 
   useEffect(() => {
     loadPurchaseOrders();
@@ -178,7 +183,7 @@ export default function PurchaseOrdersPage() {
         <DropdownMenuItem onClick={() => handleViewPurchaseOrder(po)}>
           <Eye className="mr-2 h-4 w-4" /> View
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEditPurchaseOrder(po)}>
+        <DropdownMenuItem onClick={() => { setSelectedPO(po); setShowForm(true); }}>
           <Edit className="mr-2 h-4 w-4" /> Edit
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => toast.info("Receive items placeholder")}>
@@ -227,7 +232,7 @@ export default function PurchaseOrdersPage() {
             Manage your purchase orders and track receipts
           </p>
         </div>
-        <Button onClick={handleCreatePurchaseOrder}>
+        <Button onClick={() => { setSelectedPO(null); setShowForm(true); }}>
           <Plus className="mr-2 h-4 w-4" />
           New Purchase Order
         </Button>
@@ -257,7 +262,7 @@ export default function PurchaseOrdersPage() {
       </Card>
 
       {/* Form Dialog Skeleton */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -271,10 +276,15 @@ export default function PurchaseOrdersPage() {
                 : "Fill in the details to create a new purchase order."}
             </DialogDescription>
           </DialogHeader>
-          {/* ⏳ Placeholder for PurchaseOrderForm */}
-          <div className="p-6 text-center text-muted-foreground">
-            Form goes here...
-          </div>
+          <PurchaseOrderForm
+            purchaseOrder={selectedPO}
+            onSave={(savedPO) => {
+              setShowForm(false);
+              // refresh table
+              fetchPurchaseOrders();
+            }}
+            onCancel={() => setShowForm(false)}
+          />
         </DialogContent>
       </Dialog>
 

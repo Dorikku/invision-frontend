@@ -13,15 +13,6 @@ export interface SalesPerson {
   name: string;
 }
 
-export interface Supplier {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  company: string;
-}
-
 export interface Category{
   id: number;
   name: string;
@@ -152,6 +143,16 @@ export interface Payment {
   document?: string;  // URL or path to receipt
 }
 
+export interface SimpleCustomer {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  contact_person: string | null;
+  status: string;
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -167,6 +168,16 @@ export interface Customer {
   has_unpaid_invoices: boolean;
   avatar: string;
 }
+
+export type Supplier = {
+  id: number | string;
+  name: string;
+  contact_person?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  status?: string | null;
+};
 
 export interface ActiveOrder {
   id: string;

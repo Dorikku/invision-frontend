@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Combobox } from '../ui/combobox';
 import { Plus, Trash2 } from 'lucide-react';
-import type { SalesOrder, Customer, Product, LineItem, SalesPerson } from '../../types';
+import type { SalesOrder, Customer, Product, LineItem, SalesPerson, SimpleCustomer } from '../../types';
 
 interface SalesOrderFormProps {
   salesOrder?: SalesOrder | null;
@@ -29,7 +29,7 @@ interface FormLineItem {
 }
 
 export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOrderFormProps) {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<SimpleCustomer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [formData, setFormData] = useState({
@@ -69,7 +69,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
       try {
         setLoading(true);
         // Fetch customers
-        const customerResponse = await fetch('http://127.0.0.1:8000/api/v1/customers');
+        const customerResponse = await fetch('http://127.0.0.1:8000/api/v1/customers/simple');
         if (!customerResponse.ok) {
           throw new Error('Failed to fetch customers');
         }
