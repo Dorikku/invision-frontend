@@ -112,22 +112,50 @@ export interface Invoice extends Record<string, unknown> {
   updatedAt: string;
 }
 
+// export interface PurchaseOrder extends Record<string, unknown> {
+//   id: string;
+//   poNumber: string;
+//   supplierId: string;
+//   supplierName: string;
+//   supplierEmail: string;
+//   supplierAddress: string;
+//   date: string;
+//   deliveryDate: string;
+//   items: LineItem[];
+//   subtotal: number;
+//   tax: number;
+//   taxRate: number;
+//   total: number;
+//   status: 'draft' | 'sent' | 'confirmed' | 'received' | 'cancelled';
+//   notes: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+export interface PurchaseOrderItem {
+  id: number;
+  productName: string;
+  description?: string;
+  quantityOrdered: number;
+  unitPrice: number;
+  taxRate: number;
+  lineTotal: number;
+}
+
 export interface PurchaseOrder extends Record<string, unknown> {
-  id: string;
+  id: number;
   poNumber: string;
   supplierId: string;
   supplierName: string;
-  supplierEmail: string;
-  supplierAddress: string;
+  supplierContactPerson?: string;
+  supplierEmail?: string;
+  supplierAddress?: string;
   date: string;
-  deliveryDate: string;
-  items: LineItem[];
+  status: 'draft' | 'sent' | 'partially_received' | 'fully_received' | 'cancelled';
+  items: PurchaseOrderItem[];
   subtotal: number;
   tax: number;
-  taxRate: number;
   total: number;
-  status: 'draft' | 'sent' | 'confirmed' | 'received' | 'cancelled';
-  notes: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }

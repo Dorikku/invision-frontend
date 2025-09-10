@@ -26,17 +26,9 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import PurchaseOrderForm from '../components/forms/PurchaseOrderForm';
-
-// Types
-export interface PurchaseOrder extends Record<string, unknown> {
-  id: number;
-  poNumber: string;
-  supplierName: string;
-  date: string;
-  status: string;
-  total: number;
-}
+import PurchaseOrderForm from "../components/forms/PurchaseOrderForm";
+import PurchaseOrderView from "../components/views/PurchaseOrderView";
+import type { PurchaseOrder } from "../types";
 
 // API functions
 const fetchPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
@@ -76,8 +68,6 @@ export default function PurchaseOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPO, setSelectedPO] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
-
 
   useEffect(() => {
     loadPurchaseOrders();
@@ -261,7 +251,7 @@ export default function PurchaseOrdersPage() {
         </CardContent>
       </Card>
 
-      {/* Form Dialog Skeleton */}
+      {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -280,7 +270,6 @@ export default function PurchaseOrdersPage() {
             purchaseOrder={selectedPO}
             onSave={(savedPO) => {
               setShowForm(false);
-              // refresh table
               fetchPurchaseOrders();
             }}
             onCancel={() => setShowForm(false)}
@@ -288,20 +277,24 @@ export default function PurchaseOrdersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* View Dialog Skeleton */}
+      {/* View Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Purchase Order Details</DialogTitle>
           </DialogHeader>
           {selectedPurchaseOrder && (
-            <div className="p-6 text-center text-muted-foreground">
-              View details for{" "}
-              <span className="font-semibold">
-                {selectedPurchaseOrder.poNumber}
-              </span>{" "}
-              goes here...
-            </div>
+            <PurchaseOrderView
+              purchaseOrder={selectedPurchaseOrder}
+              onClose={() => setIsViewOpen(false)}
+              onEdit={() => {
+                setIsViewOpen(false);
+                handleEditPurchaseOrder(selectedPurchaseOrder);
+              }}
+              onReceive={() => {
+                toast.info("Receive items placeholder");
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>
