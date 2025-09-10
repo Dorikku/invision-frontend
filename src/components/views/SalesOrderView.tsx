@@ -1,0 +1,332 @@
+import { useState } from 'react';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Separator } from '../../components/ui/separator';
+import { Edit, Printer, Mail, Receipt, Truck, Wallet, CircleX } from 'lucide-react';
+import type { SalesOrder } from '../../types';
+import CreateInvoiceDialog from '../forms/CreateInvoiceDialog';
+import CreateShipmentDialog from '../../components/forms/CreateShipmentDialog';
+import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
+
+interface SalesOrderViewProps {
+  salesOrder: SalesOrder;
+  onClose: () => void;
+  onEdit: () => void;
+  onRefresh: (id: number) => void; // ✅ new
+}
+
+export default function SalesOrderView({
+  salesOrder,
+  onClose,
+  onEdit,
+  onRefresh,
+}: SalesOrderViewProps) {
+  const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
+  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+  const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
+
+  const getInvoiceStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'not_invoiced':
+        return 'destructive';
+      case 'partial':
+        return 'secondary';
+      case 'invoiced':
+        return 'success';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getPaymentStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'unpaid':
+        return 'destructive';
+      case 'partial':
+        return 'secondary';
+      case 'paid':
+        return 'success';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getShipmentStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'not_shipped':
+        return 'destructive';
+      case 'partial':
+        return 'secondary';
+      case 'shipped':
+        return 'success';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const formatStatusText = (status: string) => {
+    return status
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSendEmail = () => {
+    alert('Email functionality would be implemented here');
+  };
+
+  const handleCreateInvoice = () => {
+    setIsCreateInvoiceOpen(true);
+  };
+
+  const handleRecordPayment = () => {
+    setIsRecordPaymentOpen(true);
+  };
+
+  const handleCreateShipment = () => {
+    setIsCreateShipmentOpen(true);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Sales Order {salesOrder.orderNumber}</h2>
+          <p className="text-muted-foreground">
+            Created on {new Date(salesOrder.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleSendEmail}>
+            <Mail className="mr-2 h-4 w-4" />
+            Send Email
+          </Button>
+          <Button variant="outline" size="sm" onClick={onEdit}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        </div>
+      </div>
+
+      {/* Order + Customer Info */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <span className="font-medium">Order Date:</span>{' '}
+              {new Date(salesOrder.date).toLocaleDateString()}
+            </div>
+            {salesOrder.deliveryDate && (
+              <div>
+                <span className="font-medium">Date Shipped:</span>{' '}
+                {new Date(salesOrder.deliveryDate).toLocaleDateString()}
+              </div>
+            )}
+            {salesOrder.salesPersonName && (
+              <div>
+                <span className="font-medium">Sales Person:</span>{' '}
+                {salesOrder.salesPersonName}
+              </div>
+            )}
+            <div className="space-y-2">
+              <div>
+                <span className="font-medium">Invoice Status:</span>{' '}
+                <Badge variant={getInvoiceStatusBadgeVariant(salesOrder.invoiceStatus)}>
+                  {formatStatusText(salesOrder.invoiceStatus)}
+                </Badge>
+              </div>
+              <div>
+                <span className="font-medium">Payment Status:</span>{' '}
+                <Badge variant={getPaymentStatusBadgeVariant(salesOrder.paymentStatus)}>
+                  {formatStatusText(salesOrder.paymentStatus)}
+                </Badge>
+              </div>
+              <div>
+                <span className="font-medium">Shipment Status:</span>{' '}
+                <Badge variant={getShipmentStatusBadgeVariant(salesOrder.shipmentStatus)}>
+                  {formatStatusText(salesOrder.shipmentStatus)}
+                </Badge>
+              </div>
+            </div>
+            {salesOrder.quotationId && (
+              <div>
+                <span className="font-medium">From Quotation #:</span>{' '}
+                {salesOrder.quotationId}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Customer Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <span className="font-medium">Name:</span> {salesOrder.customerName}
+            </div>
+            <div>
+              <span className="font-medium">Contact Person:</span>{' '}
+              {salesOrder.customerContactPerson}
+            </div>
+            {salesOrder.customerEmail && (
+              <div>
+                <span className="font-medium">Email:</span> {salesOrder.customerEmail}
+              </div>
+            )}
+            {salesOrder.customerAddress && (
+              <div>
+                <span className="font-medium">Address:</span>
+                <div className="mt-1 text-sm text-muted-foreground whitespace-pre-line">
+                  {salesOrder.customerAddress}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Items */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
+              <div className="col-span-4">Item</div>
+              <div className="col-span-2 text-right">Quantity</div>
+              <div className="col-span-2 text-right">Unit Price</div>
+              <div className="col-span-2 text-right">Tax</div>
+              <div className="col-span-2 text-right">Total</div>
+            </div>
+            <Separator />
+            {salesOrder.items.map((item, index) => (
+              <div key={index} className="grid grid-cols-12 gap-4 text-sm">
+                <div className="col-span-4">
+                  <div className="font-medium">{item.productName}</div>
+                  {item.description && (
+                    <div className="text-muted-foreground">{item.description}</div>
+                  )}
+                </div>
+                <div className="col-span-2 text-right">{item.quantity}</div>
+                <div className="col-span-2 text-right">₱ {item.unitPrice}</div>
+                <div className="col-span-2 text-right">{item.taxRate * 100}%</div>
+                <div className="col-span-2 text-right">₱ {item.total}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>₱ {salesOrder.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Tax:</span>
+              <span>₱ {salesOrder.tax.toFixed(2)}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total:</span>
+              <span>₱ {salesOrder.total.toFixed(2)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
+      {salesOrder.notes && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">
+              {salesOrder.notes}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex justify-end gap-2">
+        {['not_invoiced', 'partial'].includes(salesOrder.invoiceStatus) && (
+          <Button onClick={handleCreateInvoice}>
+            <Receipt className="mr-2 h-4 w-4" /> Create Invoice
+          </Button>
+        )}
+
+        {['invoiced', 'partial'].includes(salesOrder.invoiceStatus) &&
+          salesOrder.paymentStatus !== 'paid' && (
+            <Button onClick={handleRecordPayment}>
+              <Wallet className="mr-2 h-4 w-4" /> Record Payment
+            </Button>
+          )}
+
+        {salesOrder.shipmentStatus !== 'shipped' && (
+          <Button onClick={handleCreateShipment}>
+            <Truck className="mr-2 h-4 w-4" /> Create Shipment
+          </Button>
+        )}
+
+        <Button variant="outline" onClick={onClose}>
+          <CircleX className="mr-2 h-4 w-4" />
+          Close
+        </Button>
+      </div>
+
+      {/* Dialogs with refresh */}
+      <CreateInvoiceDialog
+        open={isCreateInvoiceOpen}
+        onOpenChange={setIsCreateInvoiceOpen}
+        salesOrder={salesOrder}
+        onInvoiceCreated={() => {
+          setIsCreateInvoiceOpen(false);
+          onRefresh(salesOrder.id);
+        }}
+      />
+
+      <RecordPaymentDialog
+        open={isRecordPaymentOpen}
+        onOpenChange={setIsRecordPaymentOpen}
+        salesOrder={salesOrder}
+        onPaymentRecorded={() => {
+          setIsRecordPaymentOpen(false);
+          onRefresh(salesOrder.id);
+        }}
+      />
+
+      <CreateShipmentDialog
+        open={isCreateShipmentOpen}
+        onOpenChange={setIsCreateShipmentOpen}
+        salesOrder={salesOrder}
+        onShipmentCreated={() => {
+          setIsCreateShipmentOpen(false);
+          onRefresh(salesOrder.id);
+        }}
+      />
+    </div>
+  );
+}
