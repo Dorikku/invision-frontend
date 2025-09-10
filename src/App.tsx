@@ -29,27 +29,25 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <BrowserRouter>
+        <BrowserRouter basename="/invision-frontend">
           <div className="flex h-screen bg-gray-50">
             <Sidebar />
             <ScrollArea className="flex flex-1 flex-col overflow-hidden">
               <Header />
               <main className="flex-1 overflow-auto p-6">
-                <BrowserRouter basename="/invision-frontend">
-                  <Routes>
-                    <Route index element={<Dashboard />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/quotations" element={<QuotationsPage />} />
-                    <Route path="/sales-orders" element={<SalesOrdersPage />} />
-                    <Route path="/invoices" element={<InvoicesPage />} />
-                    <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-                    <Route path="/customers" element={<CustomersPage />} />
-                    <Route path="/suppliers" element={<SuppliersPage />} />
-                    <Route path="/products" element={<ProductsPage />} />
-                    <Route path="/reports" element={<ReportsPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
+                <Routes>
+                  <Route index element={<Dashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/quotations" element={<QuotationsPage />} />
+                  <Route path="/sales-orders" element={<SalesOrdersPage />} />
+                  <Route path="/invoices" element={<InvoicesPage />} />
+                  <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                  <Route path="/customers" element={<CustomersPage />} />
+                  <Route path="/suppliers" element={<SuppliersPage />} />
+                  <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
               </main>
             </ScrollArea>
           </div>
