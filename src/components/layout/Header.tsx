@@ -1,4 +1,4 @@
-import { Bell, Search, User } from 'lucide-react';
+import { Bell, Search, User, Menu, X } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import {
@@ -8,23 +8,54 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { useState } from 'react';
 
 export default function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <header className="bg-white shadow-sm border-b">
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-4">
+        {/* Left section */}
+        <div className="flex items-center space-x-2 sm:space-x-4 flex-1">
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+
+          {/* Desktop search */}
+          <div className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="search"
               placeholder="Search documents, customers, products..."
-              className="pl-10 w-96"
+              className="pl-10 w-64 lg:w-96"
             />
           </div>
+
+          {/* Mobile search toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
         </div>
         
-        <div className="flex items-center space-x-4">
+        {/* Right section */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
@@ -38,7 +69,7 @@ export default function Header() {
                     <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium">Admin User</span>
+                <span className="text-sm font-medium hidden sm:inline">Admin User</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -49,6 +80,44 @@ export default function Header() {
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Mobile search bar */}
+      {isSearchOpen && (
+        <div className="md:hidden px-4 pb-4 border-t bg-gray-50">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-10 w-full"
+              autoFocus
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t bg-white">
+          <nav className="px-4 py-2 space-y-2">
+            <Button variant="ghost" className="w-full justify-start">
+              Dashboard
+            </Button>
+            <Button variant="ghost" className="w-full justify-start">
+              Documents
+            </Button>
+            <Button variant="ghost" className="w-full justify-start">
+              Customers
+            </Button>
+            <Button variant="ghost" className="w-full justify-start">
+              Products
+            </Button>
+            <Button variant="ghost" className="w-full justify-start">
+              Analytics
+            </Button>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

@@ -56,49 +56,67 @@ export default function Dashboard() {
   ]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex space-x-3">
-          <Button variant="outline">Generate Sales Report</Button>
-          <Button>+ Add New Order</Button>
+    <div className="min-h-screen p-4 sm:p-6 lg:p-1">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto text-sm sm:text-base"
+              size="sm"
+            >
+              Generate Sales Report
+            </Button>
+            <Button 
+              className="w-full sm:w-auto text-sm sm:text-base"
+              size="sm"
+            >
+              + Add New Order
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsData.map((stat) => (
-          <StatsCard
-            key={stat.id}
-            title={stat.title}
-            value={stat.value}
-            change={stat.change}
-            trend={stat.trend}
-            icon={stat.icon}
-          />
-        ))}
-      </div>
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {statsData.map((stat) => (
+            <div key={stat.id} className="min-w-0">
+              <StatsCard
+                title={stat.title}
+                value={stat.value}
+                change={stat.change}
+                trend={stat.trend}
+                icon={stat.icon}
+              />
+            </div>
+          ))}
+        </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Monthly Sales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MonthlySalesChart />
-          </CardContent>
-        </Card>
+        {/* Charts */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+          <Card className="min-w-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Monthly Sales</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="w-full overflow-hidden">
+                <MonthlySalesChart />
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Weekly Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <WeeklySalesChart />
-          </CardContent>
-        </Card>
+          <Card className="min-w-0">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Weekly Performance</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="w-full overflow-hidden">
+                <WeeklySalesChart />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
