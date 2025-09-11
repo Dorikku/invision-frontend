@@ -39,13 +39,15 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
   const [tracker, setTracker] = useState<string>('');
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
   useEffect(() => {
     if (open) {
       setLoading(true);
       const fetchShippedQuantities = async () => {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${salesOrder.id}/shipped-quantities`);
+          const response = await fetch(`${API_URL}/sales-orders/${salesOrder.id}/shipped-quantities`);
           if (!response.ok) {
             throw new Error('Failed to fetch shipped quantities');
           }
@@ -113,7 +115,7 @@ export default function CreateShipmentDialog({ open, onOpenChange, salesOrder, o
         items: itemsToShip,
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/v1/shipments', {
+      const response = await fetch(`${API_URL}/shipments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

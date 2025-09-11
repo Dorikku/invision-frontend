@@ -16,6 +16,8 @@ interface CustomerFormProps {
 }
 
 export default function CustomerForm({ customer, onSave, onCancel }: CustomerFormProps) {
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [formData, setFormData] = useState({
     name: customer?.name || "",
     email: customer?.email || "",
@@ -42,8 +44,8 @@ export default function CustomerForm({ customer, onSave, onCancel }: CustomerFor
     setSaving(true);
     try {
       const url = customer
-        ? `http://127.0.0.1:8000/api/v1/customers/${customer.id}`
-        : "http://127.0.0.1:8000/api/v1/customers";
+        ? `${API_URL}/customers/${customer.id}`
+        : "${API_URL}/customers";
 
       const method = customer ? "PUT" : "POST";
 

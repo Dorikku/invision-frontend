@@ -13,16 +13,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 
 // ---------------- API Calls ----------------
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const fetchCustomers = async (): Promise<Customer[]> => {
-  const res = await fetch(`${API_BASE}/customers`);
+  const res = await fetch(`${API_URL}/customers`);
   if (!res.ok) throw new Error("Failed to fetch customers");
   return res.json();
 };
 
 const fetchActiveOrders = async (customerId: number): Promise<ActiveOrder[]> => {
-  const res = await fetch(`${API_BASE}/customers/${customerId}/active-orders`);
+  const res = await fetch(`${API_URL}/customers/${customerId}/active-orders`);
   if (!res.ok) throw new Error("Failed to fetch active orders");
   return res.json();
 };
@@ -30,7 +30,7 @@ const fetchActiveOrders = async (customerId: number): Promise<ActiveOrder[]> => 
 const fetchOrderHistory = async (
   customerId: number
 ): Promise<OrderHistoryItem[]> => {
-  const res = await fetch(`${API_BASE}/customers/${customerId}/order-history`);
+  const res = await fetch(`${API_URL}/customers/${customerId}/order-history`);
   if (!res.ok) throw new Error("Failed to fetch order history");
   return res.json();
 };

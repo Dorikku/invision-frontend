@@ -23,6 +23,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     loadCategories();
@@ -31,7 +32,7 @@ export default function ProductsPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/categories');
+      const response = await fetch(`${API_URL}/categories`);
       if (!response.ok) throw new Error('Failed to fetch categories');
       const data = await response.json();
       setCategories(data);
@@ -44,7 +45,7 @@ export default function ProductsPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/v1/products');
+      const response = await fetch(`${API_URL}/products`);
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
       setProducts(data);
@@ -75,7 +76,7 @@ export default function ProductsPage() {
   const handleDeleteProduct = async (product: Product) => {
     if (window.confirm(`Are you sure you want to delete product ${product.name}?`)) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/v1/products/${product.id}`, {
+        const response = await fetch(`${API_URL}/products/${product.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete product');
@@ -90,7 +91,7 @@ export default function ProductsPage() {
 
   const handleAdjustStock = async (product: Product, change: number) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/products/${product.id}/stock`, {
+      const response = await fetch(`${API_URL}/products/${product.id}/stock`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity_change: change }),

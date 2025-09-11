@@ -15,6 +15,8 @@ interface SupplierFormProps {
   onCancel: () => void;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFormProps) {
   const [formData, setFormData] = useState({
     name: supplier?.name || "",
@@ -42,8 +44,8 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
     setSaving(true);
     try {
       const url = supplier
-        ? `http://127.0.0.1:8000/api/v1/suppliers/${supplier.id}`
-        : "http://127.0.0.1:8000/api/v1/suppliers";
+        ? `${API_URL}/suppliers/${supplier.id}`
+        : `${API_URL}/suppliers`;
 
       const method = supplier ? "PUT" : "POST";
 

@@ -15,31 +15,33 @@ import QuotationView from '@/components/views/QuotationView';
 // -----------------
 // API functions
 // -----------------
+const API_URL = import.meta.env.VITE_API_URL;
+
 const fetchQuotations = async (): Promise<Quotation[]> => {
-  const response = await fetch('http://127.0.0.1:8000/api/v1/quotations');
+  const response = await fetch(`${API_URL}/quotations`);
   if (!response.ok) throw new Error('Failed to fetch quotations');
   return response.json();
 };
 
 const fetchQuotation = async (id: number): Promise<Quotation> => {
-  const response = await fetch(`http://127.0.0.1:8000/api/v1/quotations/${id}`);
+  const response = await fetch(`${API_URL}/quotations/${id}`);
   if (!response.ok) throw new Error('Failed to fetch quotation');
   return response.json();
 };
 
 const deleteQuotation = async (id: number): Promise<void> => {
-  const response = await fetch(`http://127.0.0.1:8000/api/v1/quotations/${id}`, { method: 'DELETE' });
+  const response = await fetch(`${API_URL}/quotations/${id}`, { method: 'DELETE' });
   if (!response.ok) throw new Error('Failed to delete quotation');
 };
 
 const acceptQuotation = async (id: number): Promise<Quotation> => {
-  const response = await fetch(`http://127.0.0.1:8000/api/v1/quotations/${id}/accept`, { method: 'POST' });
+  const response = await fetch(`${API_URL}/quotations/${id}/accept`, { method: 'POST' });
   if (!response.ok) throw new Error('Failed to accept quotation');
   return response.json();
 };
 
 const rejectQuotation = async (id: number): Promise<Quotation> => {
-  const response = await fetch(`http://127.0.0.1:8000/api/v1/quotations/${id}/reject`, { method: 'POST' });
+  const response = await fetch(`${API_URL}/quotations/${id}/reject`, { method: 'POST' });
   if (!response.ok) throw new Error('Failed to reject quotation');
   return response.json();
 };
@@ -109,7 +111,7 @@ export default function QuotationsPage() {
         }))
       };
 
-      const response = await fetch("http://127.0.0.1:8000/api/v1/quotations", {
+      const response = await fetch(`${API_URL}/quotations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

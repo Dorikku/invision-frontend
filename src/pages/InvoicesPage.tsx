@@ -12,13 +12,14 @@ import InvoiceForm from '../components/forms/InvoiceForm';
 import InvoiceView from '../components/views/InvoiceView';
 import { Input } from '@/components/ui/input';
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Mock API functions
 const fetchInvoices = async (): Promise<Invoice[]> => {
   // Simulate API delay
   // await new Promise(resolve => setTimeout(resolve, 500));
   
-  const response = await fetch('http://127.0.0.1:8000/api/v1/invoices');
+  const response = await fetch(`${API_URL}/invoices`);
   if (!response.ok) {
     throw new Error('Failed to fetch invoices');
   }

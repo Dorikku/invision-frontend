@@ -27,6 +27,7 @@ interface FormLineItem {
 }
 
 export default function QuotationForm({ quotation, onSave, onCancel }: QuotationFormProps) {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
@@ -64,7 +65,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       try {
         setLoading(true);
         // Fetch customers
-        const customerResponse = await fetch('http://127.0.0.1:8000/api/v1/customers');
+        const customerResponse = await fetch(`${API_URL}/customers`);
         if (!customerResponse.ok) {
           throw new Error('Failed to fetch customers');
         }
@@ -72,7 +73,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
         setCustomers(customerData);
 
         // Fetch products
-        const productResponse = await fetch('http://127.0.0.1:8000/api/v1/products');
+        const productResponse = await fetch(`${API_URL}/products`);
         if (!productResponse.ok) {
           throw new Error('Failed to fetch products');
         }
@@ -80,7 +81,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
         setProducts(productData);
 
         // Fetch SalesPersons
-        const salesPersonResponse = await fetch('http://127.0.0.1:8000/api/v1/salespersons');
+        const salesPersonResponse = await fetch(`${API_URL}/salespersons`);
         if (!salesPersonResponse.ok) {
           throw new Error('Failed to fetch sales persons');
         }
@@ -192,7 +193,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       let response;
       if (quotation) {
         // Update existing quotation
-        response = await fetch(`http://127.0.0.1:8000/api/v1/quotations/${quotation.id}`, {
+        response = await fetch(`${API_URL}/quotations/${quotation.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -201,7 +202,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
         });
       } else {
         // Create new quotation
-        response = await fetch('http://127.0.0.1:8000/api/v1/quotations', {
+        response = await fetch(`${API_URL}/quotations`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

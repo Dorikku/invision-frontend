@@ -18,8 +18,11 @@ import { Input } from '@/components/ui/input';
 
 
 // API functions
+const API_URL = import.meta.env.VITE_API_URL;
+
+
 const fetchSalesOrders = async (): Promise<SalesOrder[]> => {
-  const response = await fetch('http://127.0.0.1:8000/api/v1/sales-orders');
+  const response = await fetch(`${API_URL}/sales-orders`);
   if (!response.ok) {
     throw new Error('Failed to fetch sales orders');
   }
@@ -27,7 +30,7 @@ const fetchSalesOrders = async (): Promise<SalesOrder[]> => {
 };
 
 const fetchSalesOrder = async (id: number): Promise<SalesOrder> => {
-  const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${id}`);
+  const response = await fetch(`${API_URL}/sales-orders/${id}`);
   if (!response.ok) {
     throw new Error('Failed to fetch sales order');
   }
@@ -35,7 +38,7 @@ const fetchSalesOrder = async (id: number): Promise<SalesOrder> => {
 };
 
 const deleteSalesOrder = async (id: number): Promise<void> => {
-  const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${id}`, { 
+  const response = await fetch(`${API_URL}/sales-orders/${id}`, { 
     method: 'DELETE' 
   });
   if (!response.ok) {
@@ -132,7 +135,7 @@ export default function SalesOrdersPage() {
         })),
       };
 
-      const response = await fetch("http://127.0.0.1:8000/api/v1/sales-orders", {
+      const response = await fetch(`${API_URL}/sales-orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestPayload),

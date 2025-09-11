@@ -37,13 +37,15 @@ export default function CreateInvoiceDialog({ open, onOpenChange, salesOrder, on
   const [tax, setTax] = useState<number>(0);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const API_URL = import.meta.env.VITE_API_URL;
+
 
   useEffect(() => {
     if (open) {
       setLoading(true);
       const fetchInvoicedQuantities = async () => {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${salesOrder.id}/invoiced-quantities`);
+          const response = await fetch(`${API_URL}/sales-orders/${salesOrder.id}/invoiced-quantities`);
           if (!response.ok) {
             throw new Error('Failed to fetch invoiced quantities');
           }
@@ -124,7 +126,7 @@ export default function CreateInvoiceDialog({ open, onOpenChange, salesOrder, on
         items: itemsToInvoice,
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/v1/invoices', {
+      const response = await fetch(`${API_URL}/invoices`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -13,29 +13,29 @@ import { toast } from "sonner";
 import SupplierForm from "@/components/forms/SupplierForm";
 import type { Supplier, ActivePurchaseOrder, PurchaseOrderHistoryItem } from "@/types";
 
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+const API_URL = import.meta.env.VITE_API_URL
 
 // ---------------- API Calls ----------------
 const fetchSuppliers = async (): Promise<Supplier[]> => {
-  const res = await fetch(`${API_BASE}/suppliers`);
+  const res = await fetch(`${API_URL}/suppliers`);
   if (!res.ok) throw new Error("Failed to fetch suppliers");
   return res.json();
 };
 
 const fetchActiveOrders = async (supplierId: number): Promise<ActivePurchaseOrder[]> => {
-  const res = await fetch(`${API_BASE}/suppliers/${supplierId}/active-orders`);
+  const res = await fetch(`${API_URL}/suppliers/${supplierId}/active-orders`);
   if (!res.ok) throw new Error("Failed to fetch active purchase orders");
   return res.json();
 };
 
 const fetchOrderHistory = async (supplierId: number): Promise<PurchaseOrderHistoryItem[]> => {
-  const res = await fetch(`${API_BASE}/suppliers/${supplierId}/order-history`);
+  const res = await fetch(`${API_URL}/suppliers/${supplierId}/order-history`);
   if (!res.ok) throw new Error("Failed to fetch purchase order history");
   return res.json();
 };
 
 const deleteSupplier = async (id: number) => {
-  const res = await fetch(`${API_BASE}/suppliers/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API_URL}/suppliers/${id}`, { method: "DELETE" });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail || "Failed to delete supplier");

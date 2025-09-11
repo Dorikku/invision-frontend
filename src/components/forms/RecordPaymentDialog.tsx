@@ -20,6 +20,7 @@ interface RecordPaymentDialogProps {
 }
 
 export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, onPaymentRecorded }: RecordPaymentDialogProps) {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [remainingBalance, setRemainingBalance] = useState<number>(0);
@@ -45,7 +46,7 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
   const fetchInvoices = async () => {
     setFetchingInvoices(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/sales-orders/${salesOrder.id}/invoices`);
+      const response = await fetch(`${API_URL}/sales-orders/${salesOrder.id}/invoices`);
       if (!response.ok) throw new Error('Failed to fetch invoices');
       const data: Invoice[] = await response.json();
       const openInvoices = data.filter(inv => ['unpaid', 'partial', 'overdue'].includes(inv.status));
@@ -67,7 +68,7 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
   const fetchRemainingBalance = async (invoiceId: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/invoices/${invoiceId}/remaining-balance`);
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/remaining-balance`);
       if (!response.ok) throw new Error('Failed to fetch remaining balance');
       const { remaining_balance } = await response.json();
       setRemainingBalance(remaining_balance);
@@ -121,7 +122,7 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
       if (notes) formData.append('notes', notes);
       if (receipt) formData.append('receipt', receipt);
 
-      const response = await fetch('http://127.0.0.1:8000/api/v1/payments', {
+      const response = await fetch(`${API_URL}/payments`, {
         method: 'POST',
         body: formData,
       });

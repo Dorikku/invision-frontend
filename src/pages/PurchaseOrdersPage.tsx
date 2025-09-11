@@ -31,15 +31,18 @@ import PurchaseOrderView from "../components/views/PurchaseOrderView";
 import type { PurchaseOrder } from "../types";
 
 // API functions
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 const fetchPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
-  const response = await fetch("http://127.0.0.1:8000/api/v1/purchase-orders");
+  const response = await fetch(`${API_URL}/purchase-orders`);
   if (!response.ok) throw new Error("Failed to fetch purchase orders");
   return response.json();
 };
 
 const fetchPurchaseOrder = async (id: number): Promise<PurchaseOrder> => {
   const response = await fetch(
-    `http://127.0.0.1:8000/api/v1/purchase-orders/${id}`
+    `${API_URL}/purchase-orders/${id}`
   );
   if (!response.ok) throw new Error("Failed to fetch purchase order");
   return response.json();
@@ -47,7 +50,7 @@ const fetchPurchaseOrder = async (id: number): Promise<PurchaseOrder> => {
 
 const deletePurchaseOrder = async (id: number): Promise<void> => {
   const response = await fetch(
-    `http://127.0.0.1:8000/api/v1/purchase-orders/${id}`,
+    `${API_URL}/purchase-orders/${id}`,
     { method: "DELETE" }
   );
   if (!response.ok) throw new Error("Failed to delete purchase order");

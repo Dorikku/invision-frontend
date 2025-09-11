@@ -31,6 +31,7 @@ interface FormLineItem {
 }
 
 export default function EditSalesOrderForm({ salesOrder, onSave, onCancel, saving, setSaving }: EditSalesOrderFormProps) {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
@@ -68,17 +69,17 @@ export default function EditSalesOrderForm({ salesOrder, onSave, onCancel, savin
     const fetchData = async () => {
       try {
         setLoading(true);
-        const customerResponse = await fetch('http://127.0.0.1:8000/api/v1/customers');
+        const customerResponse = await fetch(`${API_URL}/customers`);
         if (!customerResponse.ok) throw new Error('Failed to fetch customers');
         const customerData = await customerResponse.json();
         setCustomers(customerData);
 
-        const productResponse = await fetch('http://127.0.0.1:8000/api/v1/products');
+        const productResponse = await fetch(`${API_URL}/products`);
         if (!productResponse.ok) throw new Error('Failed to fetch products');
         const productData = await productResponse.json();
         setProducts(productData);
 
-        const salesPersonResponse = await fetch('http://127.0.0.1:8000/api/v1/salespersons');
+        const salesPersonResponse = await fetch(`${API_URL}/salespersons`);
         if (!salesPersonResponse.ok) throw new Error('Failed to fetch sales persons');
         const salesPersonData = await salesPersonResponse.json();
         setSalesPersons(salesPersonData);
