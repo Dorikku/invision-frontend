@@ -22,10 +22,10 @@ export interface Category{
 export interface Product extends Record<string, unknown>{
   id: string;
   name: string;
-  sku: string;
+  sku?: string;
   description?: string;
   category_id?: number;
-  category_name: string;
+  category_name?: string;
   quantity: number;
   cost_price: number;
   selling_price: number;

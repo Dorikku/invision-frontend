@@ -12,6 +12,7 @@ import type { Product, Category } from '../types';
 import ProductView from '../components/views/ProductView';
 import { ImageOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import ProductsForm from '@/components/forms/ProductForm';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -350,7 +351,12 @@ export default function ProductsPage() {
               }
             </DialogDescription>
           </DialogHeader>
-          {/* TODO: Implement ProductForm component */}
+          <ProductsForm
+            product={editingProduct}
+            categories={categories}
+            onSuccess={loadProducts}
+            onClose={() => setIsFormOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
