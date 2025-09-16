@@ -77,7 +77,7 @@ export default function ProductView({ product, onClose, onEdit }: ProductViewPro
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="h-24 w-24 object-cover rounded"
+                    className="h-24 w-24 object-contain rounded"
                   />
                 ) : (
                   <span className="text-sm text-muted-foreground">No image</span>

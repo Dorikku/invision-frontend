@@ -126,7 +126,7 @@ export default function ProductsPage() {
           <img
             src={value}
             alt="Product"
-            className="h-10 w-10 object-cover rounded"
+            className="h-10 w-10 object-contain rounded"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
