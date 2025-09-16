@@ -138,7 +138,7 @@ export default function PurchaseOrderForm({
         setLoading(true);
         // Suppliers - you said API is not yet implemented; try fetching and gracefully fallback
         try {
-          const supRes = await fetch("${API_URL}/suppliers/simple");
+          const supRes = await fetch(`${API_URL}/suppliers/simple`);
           if (!supRes.ok) throw new Error("No suppliers endpoint yet");
           const supData = await supRes.json();
           setSuppliers(supData);
@@ -149,7 +149,7 @@ export default function PurchaseOrderForm({
         }
 
         // Products - you said this exists
-        const prodRes = await fetch("${API_URL}/products");
+        const prodRes = await fetch(`${API_URL}/products`);
         if (!prodRes.ok) throw new Error("Failed to fetch products");
         const prodData = await prodRes.json();
         setProducts(prodData);
@@ -298,7 +298,7 @@ export default function PurchaseOrderForm({
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch("${API_URL}/purchase-orders", {
+        res = await fetch(`${API_URL}/purchase-orders`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

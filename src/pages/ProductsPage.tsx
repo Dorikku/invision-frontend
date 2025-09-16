@@ -351,15 +351,6 @@ export default function ProductsPage() {
             </DialogDescription>
           </DialogHeader>
           {/* TODO: Implement ProductForm component */}
-          {/* <ProductForm
-            product={editingProduct}
-            onSave={() => {
-              setIsFormOpen(false);
-              loadProducts();
-              toast.success(`Product ${editingProduct ? 'updated' : 'created'} successfully`);
-            }}
-            onCancel={() => setIsFormOpen(false)}
-          /> */}
         </DialogContent>
       </Dialog>
 
