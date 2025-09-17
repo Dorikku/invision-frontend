@@ -1,30 +1,52 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import type { SalesOrder, Invoice } from '@/types';  // Assume Invoice has id, invoiceNumber, status, total
+import type { SalesOrder, Invoice } from '@/types';
 import { ScrollArea } from '../ui/scroll-area';
 
 interface RecordPaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  salesOrder: SalesOrder;
+  salesOrder?: SalesOrder;   // ✅ optional now
+  invoice?: Invoice;         // ✅ optional now
   onPaymentRecorded: () => void;
 }
 
-export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, onPaymentRecorded }: RecordPaymentDialogProps) {
+export default function RecordPaymentDialog({
+  open,
+  onOpenChange,
+  salesOrder,
+  invoice,
+  onPaymentRecorded,
+}: RecordPaymentDialogProps) {
   const API_URL = import.meta.env.VITE_API_URL;
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [remainingBalance, setRemainingBalance] = useState<number>(0);
-  const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [paymentDate, setPaymentDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
   const [amount, setAmount] = useState<number>(0);
   const [method, setMethod] = useState<string>('');
   const [reference, setReference] = useState<string>('');
@@ -37,21 +59,38 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
 
   useEffect(() => {
     if (open) {
-      fetchInvoices();
+      resetForm(); // ✅ clear first
       setPaymentDate(new Date().toISOString().split('T')[0]);
-      resetForm();
+      fetchInvoices(); // ✅ will set selectedInvoiceId if invoice mode
     }
   }, [open]);
+
 
   const fetchInvoices = async () => {
     setFetchingInvoices(true);
     try {
-      const response = await fetch(`${API_URL}/sales-orders/${salesOrder.id}/invoices`);
-      if (!response.ok) throw new Error('Failed to fetch invoices');
-      const data: Invoice[] = await response.json();
-      const openInvoices = data.filter(inv => ['unpaid', 'partial', 'overdue'].includes(inv.status));
-      setInvoices(openInvoices);
-      if (openInvoices.length > 0) setSelectedInvoiceId(openInvoices[0].id.toString());
+      if (invoice) {
+        // ✅ single invoice mode
+        if (['unpaid', 'partial', 'overdue'].includes(invoice.status)) {
+          setInvoices([invoice]);
+          setSelectedInvoiceId(invoice.id.toString());
+        } else {
+          setInvoices([]);
+        }
+      } else if (salesOrder) {
+        // ✅ sales order mode
+        const response = await fetch(
+          `${API_URL}/sales-orders/${salesOrder.id}/invoices`
+        );
+        if (!response.ok) throw new Error('Failed to fetch invoices');
+        const data: Invoice[] = await response.json();
+        const openInvoices = data.filter((inv) =>
+          ['unpaid', 'partial', 'overdue'].includes(inv.status)
+        );
+        setInvoices(openInvoices);
+        if (openInvoices.length > 0)
+          setSelectedInvoiceId(openInvoices[0].id.toString());
+      }
     } catch (err) {
       toast.error('Failed to load invoices');
     } finally {
@@ -68,11 +107,13 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
   const fetchRemainingBalance = async (invoiceId: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/invoices/${invoiceId}/remaining-balance`);
+      const response = await fetch(
+        `${API_URL}/invoices/${invoiceId}/remaining-balance`
+      );
       if (!response.ok) throw new Error('Failed to fetch remaining balance');
       const { remaining_balance } = await response.json();
       setRemainingBalance(remaining_balance);
-      setAmount(0);  // Reset amount
+      setAmount(0);
     } catch (err) {
       toast.error('Failed to load remaining balance');
     } finally {
@@ -83,7 +124,7 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {  // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         setError('File size exceeds 5MB limit');
         return;
       }
@@ -99,7 +140,8 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
 
   const validateForm = () => {
     if (!selectedInvoiceId) return 'Please select an invoice';
-    if (amount <= 0 || amount > remainingBalance) return 'Amount must be between 0 and remaining balance';
+    if (amount <= 0 || amount > remainingBalance)
+      return 'Amount must be between 0 and remaining balance';
     if (!method) return 'Please select a payment method';
     return '';
   };
@@ -141,7 +183,9 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
   };
 
   const resetForm = () => {
-    setSelectedInvoiceId(null);
+    if (!invoice) {
+      setSelectedInvoiceId(null); // only reset if in salesOrder mode
+    }
     setRemainingBalance(0);
     setAmount(0);
     setMethod('');
@@ -162,7 +206,11 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Record Payment</DialogTitle>
-            <DialogDescription>No open invoices for sales order {salesOrder.orderNumber}.</DialogDescription>
+            <DialogDescription>
+              {salesOrder
+                ? `No open invoices for sales order ${salesOrder.orderNumber}.`
+                : `This invoice has no remaining balance or is already paid.`}
+            </DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>
@@ -173,24 +221,39 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record Payment for Sales Order {salesOrder.orderNumber}</DialogTitle>
-          <DialogDescription>Select an invoice and enter payment details.</DialogDescription>
+          <DialogTitle>
+            {salesOrder
+              ? `Record Payment for Sales Order ${salesOrder.orderNumber}`
+              : `Record Payment for Invoice ${invoice?.invoiceNumber}`}
+          </DialogTitle>
+          <DialogDescription>
+            {salesOrder
+              ? 'Select an invoice and enter payment details.'
+              : 'Enter payment details for this invoice.'}
+          </DialogDescription>
         </DialogHeader>
-        {/* <ScrollArea className="max-h-[60vh] pr-4"> */}
+
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="invoice">Invoice</Label>
-            <Select value={selectedInvoiceId || ''} onValueChange={setSelectedInvoiceId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select invoice" />
-              </SelectTrigger>
-              <SelectContent>
-                {invoices.map(inv => (
-                  <SelectItem key={inv.id} value={inv.id.toString()}>{inv.invoiceNumber} ({inv.status})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {salesOrder && (
+            <div>
+              <Label htmlFor="invoice">Invoice</Label>
+              <Select
+                value={selectedInvoiceId || ''}
+                onValueChange={setSelectedInvoiceId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select invoice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {invoices.map((inv) => (
+                    <SelectItem key={inv.id} value={inv.id.toString()}>
+                      {inv.invoiceNumber} ({inv.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {selectedInvoiceId && (
             <>
@@ -200,14 +263,30 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
               <Separator />
               <div>
                 <Label htmlFor="paymentDate">Payment Date</Label>
-                <Input id="paymentDate" type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} />
+                <Input
+                  id="paymentDate"
+                  type="date"
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                />
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Label htmlFor="amount">Amount</Label>
-                  <Input id="amount" type="number" min="0" max={remainingBalance} value={amount} onChange={e => setAmount(parseFloat(e.target.value) || 0)} />
+                  <Input
+                    id="amount"
+                    type="number"
+                    min="0"
+                    max={remainingBalance}
+                    value={amount}
+                    onChange={(e) =>
+                      setAmount(parseFloat(e.target.value) || 0)
+                    }
+                  />
                 </div>
-                <Button variant="outline" onClick={handlePayFull}>Pay Full</Button>
+                <Button variant="outline" onClick={handlePayFull}>
+                  Pay Full
+                </Button>
               </div>
               <div>
                 <Label htmlFor="method">Payment Method</Label>
@@ -229,16 +308,35 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
               </div>
               <div>
                 <Label htmlFor="reference">Reference</Label>
-                <Input id="reference" value={reference} onChange={e => setReference(e.target.value)} />
+                <Input
+                  id="reference"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} />
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="receipt">Receipt (Image)</Label>
-                <Input id="receipt" type="file" accept="image/*" onChange={handleFileChange} />
-                {previewUrl && <img src={previewUrl} alt="Preview" className="mt-2 max-h-40" />}
+                <Input
+                  id="receipt"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="mt-2 max-h-40"
+                  />
+                )}
               </div>
             </>
           )}
@@ -250,14 +348,22 @@ export default function RecordPaymentDialog({ open, onOpenChange, salesOrder, on
             </Alert>
           )}
         </div>
-        
+
         <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={loading || !selectedInvoiceId}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || !selectedInvoiceId}
+          >
             {loading ? 'Submitting...' : 'Record Payment'}
           </Button>
         </DialogFooter>
-        {/* </ScrollArea> */}
       </DialogContent>
     </Dialog>
   );

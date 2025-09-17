@@ -5,6 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Separator } from '../../components/ui/separator';
 import { Edit, Download } from 'lucide-react';
 import type { Invoice } from '../../types';
+import { useState } from 'react';
+import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
+import { Wallet } from 'lucide-react';
 
 interface InvoiceViewProps {
   invoice: Invoice;
@@ -13,6 +16,8 @@ interface InvoiceViewProps {
 }
 
 export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewProps) {
+  const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'unpaid': return 'secondary';
@@ -173,10 +178,27 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
       )}
 
       <div className="flex justify-end space-x-2">
+        {['unpaid', 'partial', 'overdue'].includes(invoice.status) && (
+          <Button onClick={() => setIsRecordPaymentOpen(true)}>
+            <Wallet className="mr-2 h-4 w-4" /> Record Payment
+          </Button>
+        )}
         <Button variant="outline" onClick={onClose}>
           Close
         </Button>
       </div>
+
+      <RecordPaymentDialog
+        open={isRecordPaymentOpen}
+        onOpenChange={setIsRecordPaymentOpen}
+        invoice={invoice}              // ✅ pass invoice directly
+        onPaymentRecorded={() => {
+          setIsRecordPaymentOpen(false);
+          // optional: trigger parent refresh if you pass it down
+        }}
+      />
     </div>
+
+    
   );
 }
