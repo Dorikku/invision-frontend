@@ -367,6 +367,7 @@ export default function InvoicesPage() {
                 setIsViewOpen(false);
                 handleEditInvoice(selectedInvoice);
               }}
+              onUpdated={loadInvoices}
             />
           )}
         </DialogContent>

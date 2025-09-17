@@ -13,9 +13,10 @@ interface InvoiceViewProps {
   invoice: Invoice;
   onClose: () => void;
   onEdit: () => void;
+  onUpdated?: () => void;
 }
 
-export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewProps) {
+export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: InvoiceViewProps) {
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
 
   const getStatusBadgeVariant = (status: string) => {
@@ -194,6 +195,7 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
         invoice={invoice}              // ✅ pass invoice directly
         onPaymentRecorded={() => {
           setIsRecordPaymentOpen(false);
+          onUpdated?.();
           // optional: trigger parent refresh if you pass it down
         }}
       />
