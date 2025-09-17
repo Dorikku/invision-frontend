@@ -62,6 +62,19 @@ export default function InvoiceFromSOForm({
     };
     fetchData();
   }, []);
+  
+  // Auto-select SO if editing an invoice
+  useEffect(() => {
+    if (invoice && invoice.salesOrderId && salesOrders.length > 0) {
+      const so = salesOrders.find((s) => String(s.id) === String(invoice.salesOrderId));
+      if (so) {
+        setSelectedSO(so);
+        setNotes(invoice.notes || "");
+        setInvoiceDate(invoice.date.split("T")[0]); // use stored date
+        setDueDate(invoice.dueDate.split("T")[0]); // use stored due date
+      }
+    }
+  }, [invoice, salesOrders]);
 
   // Load invoiced quantities when SO is selected
   useEffect(() => {
@@ -218,11 +231,13 @@ export default function InvoiceFromSOForm({
           className="w-full border rounded-md p-2 mt-1"
           value={selectedSO?.id || ""}
           onChange={(e) => {
+            if (invoice) return; // prevent changes in edit mode
             const so = salesOrders.find(
               (s) => String(s.id) === String(e.target.value)
             );
             if (so) setSelectedSO(so);
           }}
+          disabled={!!invoice} // disable if editing
         >
           <option value="">Select sales order</option>
           {salesOrders.map((so) => (
