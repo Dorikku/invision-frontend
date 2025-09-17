@@ -174,12 +174,14 @@ export default function InvoiceStandaloneForm({
         date: formData.date,
         dueDate: formData.dueDate,
         notes: formData.notes,
-        items: items.map((it) => ({
-          productId: parseInt(it.productId),
-          quantity: it.quantity,
-          unitPrice: it.unitPrice,
-          taxRate: it.taxRate,
-        })),
+        items: items
+          .filter((it) => it.quantity > 0) // 🚀 drop zero-qty
+          .map((it) => ({
+            productId: parseInt(it.productId),
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            taxRate: it.taxRate,
+          })),
       };
 
       const url = invoice

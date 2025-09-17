@@ -3,7 +3,6 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
-import { Checkbox } from "../ui/checkbox";
 import { Separator } from "../ui/separator";
 import { Card, CardContent } from "../ui/card";
 import { toast } from "sonner";
@@ -17,7 +16,6 @@ interface InvoiceFromSOFormProps {
 
 interface SelectedItem {
   original: LineItem;
-  selected: boolean;
   quantity: number;
   invoicedQuantity: number;
   remainingQuantity: number;
@@ -37,7 +35,9 @@ export default function InvoiceFromSOForm({
     new Date().toISOString().split("T")[0]
   );
   const [dueDate, setDueDate] = useState<string>(
-    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0]
   );
   const [notes, setNotes] = useState<string>(invoice?.notes || "");
   const [subtotal, setSubtotal] = useState<number>(0);
@@ -62,23 +62,42 @@ export default function InvoiceFromSOForm({
     };
     fetchData();
   }, []);
-  
-  // Auto-select SO if editing an invoice
+
+  // Auto-select SO + prefill items if editing an invoice
   useEffect(() => {
     if (invoice && invoice.salesOrderId && salesOrders.length > 0) {
-      const so = salesOrders.find((s) => String(s.id) === String(invoice.salesOrderId));
+      const so = salesOrders.find(
+        (s) => String(s.id) === String(invoice.salesOrderId)
+      );
       if (so) {
         setSelectedSO(so);
         setNotes(invoice.notes || "");
-        setInvoiceDate(invoice.date.split("T")[0]); // use stored date
-        setDueDate(invoice.dueDate.split("T")[0]); // use stored due date
+        setInvoiceDate(invoice.date.split("T")[0]);
+        setDueDate(invoice.dueDate.split("T")[0]);
+
+        // merge SO items with invoice items
+        const invoiceItemMap = new Map(
+          invoice.items.map((it) => [String(it.productId), it])
+        );
+
+        const mergedItems = so.items.map((item) => {
+          const invItem = invoiceItemMap.get(String(item.productId));
+          return {
+            original: item,
+            quantity: invItem ? invItem.quantity : 0,
+            invoicedQuantity: invItem ? invItem.quantity : 0,
+            remainingQuantity: item.quantity, // validate against SO later
+          };
+        });
+
+        setSelectedItems(mergedItems);
       }
     }
   }, [invoice, salesOrders]);
 
-  // Load invoiced quantities when SO is selected
+  // When SO is selected in create mode
   useEffect(() => {
-    if (!selectedSO) return;
+    if (!selectedSO || invoice) return;
 
     const fetchInvoicedQuantities = async () => {
       try {
@@ -96,7 +115,6 @@ export default function InvoiceFromSOForm({
             )?.quantity || 0;
           return {
             original: item,
-            selected: false,
             quantity: 0,
             invoicedQuantity: invoicedQty,
             remainingQuantity: item.quantity - invoicedQty,
@@ -121,43 +139,31 @@ export default function InvoiceFromSOForm({
     };
 
     fetchInvoicedQuantities();
-  }, [selectedSO]);
+  }, [selectedSO, invoice]);
 
   const calculateTotals = (items: SelectedItem[]) => {
     const newSubtotal = items.reduce(
       (sum, si) =>
-        sum + (si.selected ? si.quantity * si.original.unitPrice : 0),
+        sum + (si.quantity > 0 ? si.quantity * si.original.unitPrice : 0),
       0
     );
     const newTax = items.reduce(
       (sum, si) =>
         sum +
-        (si.selected
+        (si.quantity > 0
           ? si.quantity * si.original.unitPrice * si.original.taxRate
           : 0),
       0
     );
-    const newTotal = newSubtotal + newTax;
     setSubtotal(newSubtotal);
     setTax(newTax);
-    setTotal(newTotal);
-  };
-
-  const handleItemSelect = (index: number, selected: boolean) => {
-    const newSelectedItems = [...selectedItems];
-    newSelectedItems[index].selected = selected;
-    newSelectedItems[index].quantity = selected
-      ? newSelectedItems[index].remainingQuantity
-      : 0;
-    setSelectedItems(newSelectedItems);
-    calculateTotals(newSelectedItems);
+    setTotal(newSubtotal + newTax);
   };
 
   const handleQuantityChange = (index: number, qty: number) => {
     const newSelectedItems = [...selectedItems];
     const maxQty = newSelectedItems[index].remainingQuantity;
     newSelectedItems[index].quantity = Math.max(0, Math.min(qty, maxQty));
-    newSelectedItems[index].selected = newSelectedItems[index].quantity > 0;
     setSelectedItems(newSelectedItems);
     calculateTotals(newSelectedItems);
   };
@@ -170,14 +176,14 @@ export default function InvoiceFromSOForm({
     }
 
     const itemsToInvoice = selectedItems
-      .filter((si) => si.selected && si.quantity > 0)
+      .filter((si) => si.quantity > 0) // drop zero-qty items
       .map((si) => ({
         soItemId: parseInt(si.original.id),
         quantity: si.quantity,
       }));
 
     if (itemsToInvoice.length === 0) {
-      toast.error("Please select at least one item to invoice");
+      toast.error("Please add at least one item to invoice");
       return;
     }
 
@@ -276,8 +282,7 @@ export default function InvoiceFromSOForm({
           <div>
             <Label>Items to Invoice</Label>
             <div className="mt-2 border rounded-md overflow-hidden">
-              <div className="grid grid-cols-12 gap-4 p-4 text-sm font-medium text-muted-foreground bg-muted/50">
-                <div className="col-span-1"></div>
+              <div className="grid grid-cols-11 gap-4 p-4 text-sm font-medium text-muted-foreground bg-muted/50">
                 <div className="col-span-3">Product</div>
                 <div className="col-span-3">Description</div>
                 <div className="col-span-2">Quantity (Remaining)</div>
@@ -288,17 +293,8 @@ export default function InvoiceFromSOForm({
               {selectedItems.map((si, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-4 p-4 items-center text-sm"
+                  className="grid grid-cols-11 gap-4 p-4 items-center text-sm"
                 >
-                  <div className="col-span-1 flex items-center">
-                    <Checkbox
-                      checked={si.selected}
-                      onCheckedChange={(checked) =>
-                        handleItemSelect(index, checked as boolean)
-                      }
-                      disabled={si.remainingQuantity === 0}
-                    />
-                  </div>
                   <div className="col-span-3 font-medium">
                     {si.original.productName}
                   </div>
@@ -312,9 +308,11 @@ export default function InvoiceFromSOForm({
                       max={si.remainingQuantity}
                       value={si.quantity}
                       onChange={(e) =>
-                        handleQuantityChange(index, parseInt(e.target.value) || 0)
+                        handleQuantityChange(
+                          index,
+                          parseInt(e.target.value) || 0
+                        )
                       }
-                      disabled={!si.selected || si.remainingQuantity === 0}
                       className="w-full"
                     />
                     <span className="text-xs text-muted-foreground ml-2">
