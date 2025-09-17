@@ -41,14 +41,10 @@ export default function InvoiceView({ invoice, onClose, onEdit }: InvoiceViewPro
           <Badge variant={getStatusBadgeVariant(invoice.status)}>
             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
           </Badge>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={onEdit}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
-          {/* <Button variant="outline" size="sm" onClick={onEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button> */}
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Download className="mr-2 h-4 w-4" />
             Print

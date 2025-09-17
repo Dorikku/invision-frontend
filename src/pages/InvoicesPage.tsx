@@ -30,14 +30,14 @@ const fetchInvoices = async (): Promise<Invoice[]> => {
 };
 
 const deleteInvoiceAPI = async (id: string): Promise<void> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // In a real application, this would be:
-  // await fetch(`/api/invoices/${id}`, { method: 'DELETE' });
-  
-  console.log(`Deleted invoice ${id}`);
+  const response = await fetch(`${API_URL}/invoices/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete invoice');
+  }
 };
+
 
 const sendInvoiceAPI = async (id: string): Promise<void> => {
   // Simulate API delay
