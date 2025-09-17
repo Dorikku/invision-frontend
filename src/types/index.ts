@@ -109,7 +109,7 @@ export interface Invoice extends Record<string, unknown> {
   items: LineItem[];
   subtotal: number;
   tax: number;
-  total: number;
+  total?: number | null;
   status: 'unpaid' | 'partial' | 'paid'  | 'overdue' | 'cancelled';
   paidAmount: number;
   notes: string;

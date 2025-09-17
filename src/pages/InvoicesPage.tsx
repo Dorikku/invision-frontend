@@ -57,6 +57,8 @@ export default function InvoicesPage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [mode, setMode] = useState<"so" | "standalone" | null>(null);
+
 
   useEffect(() => {
     loadInvoices();
@@ -77,11 +79,14 @@ export default function InvoicesPage() {
 
   const handleCreateInvoice = () => {
     setEditingInvoice(null);
+    setMode(null); // reset mode so user chooses type
     setIsFormOpen(true);
   };
 
+
   const handleEditInvoice = (invoice: Invoice) => {
     setEditingInvoice(invoice);
+    setMode(invoice.salesOrderId ? "so" : "standalone");
     setIsFormOpen(true);
   };
 
@@ -161,7 +166,8 @@ export default function InvoicesPage() {
       key: 'total',
       label: 'Total',
       sortable: true,
-      render: (value: number) => `₱${value.toLocaleString()}`,
+      render: (value: number | null) =>
+        value != null ? `₱${value.toLocaleString()}` : "—",  // 👈 safe
     },
     {
       key: 'status',
@@ -318,24 +324,28 @@ export default function InvoicesPage() {
               {editingInvoice ? 'Update the invoice details.' : 'Create a new invoice.'}
             </DialogDescription>
           </DialogHeader>
-          {/* <InvoiceForm
-            invoice={editingInvoice}
-            onSave={() => {
-              setIsFormOpen(false);
-              loadInvoices();
-              toast.success(`Invoice ${editingInvoice ? 'updated' : 'created'} successfully`);
-            }}
-            onCancel={() => setIsFormOpen(false)}
-          /> */}
-          <InvoiceForm
-            invoice={editingInvoice}
-            onSave={() => {
-              setIsFormOpen(false);
-              loadInvoices();
-              toast.success(`Invoice ${editingInvoice ? 'updated' : 'created'} successfully`);
-            }}
-            onCancel={() => setIsFormOpen(false)}
-          />
+          {!mode ? (
+            // type selector
+            <div className="flex justify-around p-6">
+              <Button onClick={() => setMode("so")} className="w-40">
+                From Sales Order
+              </Button>
+              <Button onClick={() => setMode("standalone")} className="w-40">
+                Standalone
+              </Button>
+            </div>
+          ) : (
+            <InvoiceForm
+              mode={mode}
+              invoice={editingInvoice}
+              onInvoiceCreated={() => {
+                setIsFormOpen(false);
+                loadInvoices();
+              }}
+              onCancel={() => setIsFormOpen(false)}
+            />
+
+          )}
         </DialogContent>
       </Dialog>
 
