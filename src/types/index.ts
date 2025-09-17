@@ -34,12 +34,17 @@ export interface Product extends Record<string, unknown>{
 
 export interface LineItem {
   id: string;
-  productId: string;
+  // 🔹 Either from a sales order item OR a standalone product
+  soItemId?: string;       // if linked to sales order
+  productId?: string;      // always present for standalone; also available via soItem.productId
+
   productName: string;
-  description: string;
+  description?: string | null;
   quantity: number;
-  unitCost: number;
-  unitPrice: number;
+
+  // For standalone, backend will send these explicitly
+  unitCost?: number | null;
+  unitPrice: number;   // required for calculations
   total: number;
   taxRate: number;
 }
@@ -67,7 +72,7 @@ export interface Quotation extends Record<string, unknown> {
 }
 
 export interface SalesOrder extends Record<string, unknown> {
-  id: number;
+  id: string;
   orderNumber: string;
   quotationId?: string;
   customerId: string;
@@ -94,7 +99,7 @@ export interface SalesOrder extends Record<string, unknown> {
 export interface Invoice extends Record<string, unknown> {
   id: string;
   invoiceNumber: string;
-  salesOrderId?: number;
+  salesOrderId?: number | null;   // can be null for standalone invoices
   customerId: string;
   customerName: string;
   customerEmail: string;

@@ -120,6 +120,7 @@ export default function CreateInvoiceDialog({ open, onOpenChange, salesOrder, on
     try {
       const payload = {
         salesOrderId: salesOrder.id,
+        customerId: salesOrder.customerId,   
         date: invoiceDate,
         dueDate: dueDate,
         notes: notes,

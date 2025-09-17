@@ -232,14 +232,14 @@ export default function InvoicesPage() {
             Manage your invoices and billing
           </p>
         </div>
-        {/* <Button onClick={handleCreateInvoice}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Invoice
-        </Button> */}
-        <Button>
+        <Button onClick={handleCreateInvoice}>
           <Plus className="mr-2 h-4 w-4" />
           New Invoice
         </Button>
+        {/* <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          New Invoice
+        </Button> */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -318,6 +318,15 @@ export default function InvoicesPage() {
               {editingInvoice ? 'Update the invoice details.' : 'Create a new invoice.'}
             </DialogDescription>
           </DialogHeader>
+          {/* <InvoiceForm
+            invoice={editingInvoice}
+            onSave={() => {
+              setIsFormOpen(false);
+              loadInvoices();
+              toast.success(`Invoice ${editingInvoice ? 'updated' : 'created'} successfully`);
+            }}
+            onCancel={() => setIsFormOpen(false)}
+          /> */}
           <InvoiceForm
             invoice={editingInvoice}
             onSave={() => {
