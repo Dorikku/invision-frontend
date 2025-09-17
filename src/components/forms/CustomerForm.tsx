@@ -45,7 +45,7 @@ export default function CustomerForm({ customer, onSave, onCancel }: CustomerFor
     try {
       const url = customer
         ? `${API_URL}/customers/${customer.id}`
-        : "${API_URL}/customers";
+        : `${API_URL}/customers`;
 
       const method = customer ? "PUT" : "POST";
 
