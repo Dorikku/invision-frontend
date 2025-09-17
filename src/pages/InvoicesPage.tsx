@@ -316,38 +316,41 @@ export default function InvoicesPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingInvoice ? 'Edit Invoice' : 'New Invoice'}</DialogTitle>
-            <DialogDescription>
-              {editingInvoice ? 'Update the invoice details.' : 'Create a new invoice.'}
-            </DialogDescription>
-          </DialogHeader>
-          {!mode ? (
-            // type selector
-            <div className="flex justify-around p-6">
-              <Button onClick={() => setMode("so")} className="w-40">
-                From Sales Order
-              </Button>
-              <Button onClick={() => setMode("standalone")} className="w-40">
-                Standalone
-              </Button>
-            </div>
-          ) : (
-            <InvoiceForm
-              mode={mode}
-              invoice={editingInvoice}
-              onInvoiceCreated={() => {
-                setIsFormOpen(false);
-                loadInvoices();
-              }}
-              onCancel={() => setIsFormOpen(false)}
-            />
+<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+  <DialogContent
+    className={`${!mode ? "max-w-md" : "max-w-4xl"} max-h-[90vh] overflow-y-auto`}
+  >
+    <DialogHeader>
+      <DialogTitle>
+        {editingInvoice ? "Edit Invoice" : "New Invoice"}
+      </DialogTitle>
+      <DialogDescription>
+        {editingInvoice ? "Update the invoice details." : "Create a new invoice."}
+      </DialogDescription>
+    </DialogHeader>
 
-          )}
-        </DialogContent>
-      </Dialog>
+    {!mode ? (
+      // type selector
+      <div className="flex flex-col gap-4 py-4">
+        <Button onClick={() => setMode("so")}>From Sales Order</Button>
+        <Button onClick={() => setMode("standalone")} variant="outline">
+          Standalone
+        </Button>
+      </div>
+    ) : (
+      <InvoiceForm
+        mode={mode}
+        invoice={editingInvoice}
+        onInvoiceCreated={() => {
+          setIsFormOpen(false);
+          loadInvoices();
+        }}
+        onCancel={() => setIsFormOpen(false)}
+      />
+    )}
+  </DialogContent>
+</Dialog>
+
 
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
