@@ -100,6 +100,7 @@ export interface Invoice extends Record<string, unknown> {
   id: string;
   invoiceNumber: string;
   salesOrderId?: number | null;   // can be null for standalone invoices
+  // salesPersonId?: string | null;
   customerId: string;
   customerName: string;
   customerEmail: string;
