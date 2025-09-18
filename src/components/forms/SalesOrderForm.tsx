@@ -9,6 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Combobox } from '../ui/combobox';
 import { Plus, Trash2 } from 'lucide-react';
 import type { SalesOrder, Customer, Product, LineItem, SalesPerson, SimpleCustomer } from '../../types';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+
 
 interface SalesOrderFormProps {
   salesOrder?: SalesOrder | null;
@@ -28,10 +35,26 @@ interface FormLineItem {
   taxRate: number;
 }
 
+/**
+ * Local type: Product with stock info returned by /products-with-stock
+ * Extends your existing Product type so the rest of the app can still use Product fields.
+ */
+type ProductWithStock = Product & {
+  id: string;
+  selling_price: number;
+  cost_price: number;
+  stock_info: {
+    on_hand: number;
+    reserved: number;
+    available: number;
+  };
+};
+
 export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOrderFormProps) {
   const API_URL = import.meta.env.VITE_API_URL;
   const [customers, setCustomers] = useState<SimpleCustomer[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  // Use ProductWithStock here so TS knows about stock_info
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [formData, setFormData] = useState({
     salesPersonId: salesOrder?.salesPersonId || '1', // Default to sales person ID 1
@@ -77,13 +100,14 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
         const customerData = await customerResponse.json();
         setCustomers(customerData);
 
-        // Fetch products
-        const productResponse = await fetch(`${API_URL}/products`);
+        // Fetch products with stock info
+        const productResponse = await fetch(`${API_URL}/products-with-stock`);
         if (!productResponse.ok) {
           throw new Error('Failed to fetch products');
         }
         const productData = await productResponse.json();
-        setProducts(productData);
+        // Cast to local ProductWithStock type
+        setProducts(productData as ProductWithStock[]);
 
         // Fetch SalesPersons
         const salesPersonResponse = await fetch(`${API_URL}/salespersons`);
@@ -108,7 +132,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
   const productOptions = products.map(product => ({
     value: product.id,
     label: product.name,
-    description: `₱${product.selling_price.toFixed(2)} - ${product.description || ''}`
+    description: `₱${product.selling_price.toFixed(2)} - On hand: ${product.stock_info.on_hand}, Available: ${product.stock_info.available}`,
   }));
 
   const addItem = () => {
@@ -160,6 +184,17 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
     return { subtotal, tax, total };
   };
 
+  const hasInvalidQuantities = () => {
+    return items.some((item) => {
+      const selectedProduct = products.find((p) => p.id === item.productId);
+      if (!selectedProduct) return false;
+      if (item.quantity > selectedProduct.stock_info.on_hand) return true;
+      if (item.quantity > selectedProduct.stock_info.available) return true;
+      return false;
+    });
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -201,7 +236,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
 
       let response;
       if (salesOrder) {
-        // Update existing sales order (you'll need to implement PUT endpoint)
+        // Update existing sales order
         response = await fetch(`${API_URL}/sales-orders/${salesOrder.id}`, {
           method: 'PUT',
           headers: {
@@ -336,42 +371,91 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                 {items.map((item, index) => (
                   <TableRow key={item.tempId}>
                     <TableCell>
-                      <Combobox
-                        options={productOptions}
-                        value={item.productId}
-                        onValueChange={(value) => updateItem(index, 'productId', value)}
-                        placeholder="Select product"
-                        searchPlaceholder="Search products..."
-                        emptyText="No products found."
-                        className="w-full"
-                      />
+                      <div className="flex flex-col h-[60px] justify-between">
+                        <Combobox
+                          options={productOptions}
+                          value={item.productId}
+                          onValueChange={(value) => updateItem(index, "productId", value)}
+                          placeholder="Select product"
+                          searchPlaceholder="Search products..."
+                          emptyText="No products found."
+                          className="w-full"
+                        />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {item.productId
+                            ? (() => {
+                                const p = products.find((p) => p.id === item.productId);
+                                if (!p) return "";
+                                return `On hand: ${p.stock_info.on_hand} | Available: ${p.stock_info.available}`;
+                              })()
+                            : "\u00A0" /* keep blank space if no product */}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateItem(index, "quantity", parseFloat(e.target.value) || 0)
+                          }
+                          className={`w-18 ${
+                            (() => {
+                              const selectedProduct = products.find((p) => p.id === item.productId);
+                              if (!selectedProduct) return "";
+                              if (item.quantity > selectedProduct.stock_info.on_hand) {
+                                return "border-red-500";
+                              }
+                              if (item.quantity > selectedProduct.stock_info.available) {
+                                return "border-orange-500";
+                              }
+                              return "";
+                            })()
+                          }`}
+                        />
+
+                        {item.productId && (() => {
+                          const selectedProduct = products.find((p) => p.id === item.productId);
+                          if (!selectedProduct) return <p className="text-xs">&nbsp;</p>; // keeps spacing
+
+                          if (item.quantity > selectedProduct.stock_info.on_hand) {
+                            return (
+                              <p className="text-xs text-red-600">
+                                ❌ Only {selectedProduct.stock_info.on_hand} on hand.
+                              </p>
+                            );
+                          }
+                          if (item.quantity > selectedProduct.stock_info.available) {
+                            return (
+                              <p className="text-xs text-orange-600">
+                                ⚠️ Only {selectedProduct.stock_info.available} available (reserved:{" "}
+                                {selectedProduct.stock_info.reserved})
+                              </p>
+                            );
+                          }
+
+                          // ✅ fallback: blank line for spacing
+                          return <p className="text-xs">&nbsp;</p>;
+                        })()}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Input
                         type="number"
                         min="0"
-                        step="1"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="w-18"
+                        step="0.01"
+                        value={item.unitPrice}
+                        onChange={(e) =>
+                          updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)
+                        }
+                        className="w-24"
                       />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unitPrice}
-                          onChange={(e) =>
-                            updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)
-                          }
-                          className="w-24"
-                        />
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          ₱{item.unitCost?.toFixed(2) ?? "0.00"}
-                        </span>
-                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        Cost price: ₱{item.unitCost?.toFixed(2) ?? "0.00"}
+                      </span>                      
                     </TableCell>
                     <TableCell>
                       <div className="relative w-22">
@@ -389,12 +473,16 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                           %
                         </span>
                       </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {"\u00A0"}
+                      </span>                      
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">₱{item.total.toFixed(2)}</span>
+                      <span className="font-medium relative top-[-11px]">₱{item.total.toFixed(2)}</span>
                     </TableCell>
                     <TableCell>
                       <Button
+                        className='relative top-[-11px]'
                         type="button"
                         variant="ghost"
                         size="sm"
@@ -441,13 +529,39 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
       </div>
 
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
           Cancel
         </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving...' : (salesOrder ? 'Update' : 'Create')} Sales Order
-        </Button>
+
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button
+                  type="submit"
+                  disabled={saving || hasInvalidQuantities()}
+                >
+                  {saving ? "Saving..." : salesOrder ? "Update" : "Create"} Sales Order
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className={!hasInvalidQuantities() ? "hidden" : ""}>
+              <p>Fix invalid quantities before saving.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+
+
+
+
       </div>
+     
     </form>
   );
 }
