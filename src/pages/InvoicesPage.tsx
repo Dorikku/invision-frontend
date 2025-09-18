@@ -85,10 +85,15 @@ export default function InvoicesPage() {
 
 
   const handleEditInvoice = (invoice: Invoice) => {
+    if (invoice.status === "paid") {
+      toast.error("Paid invoices cannot be edited.");
+      return;
+    }
     setEditingInvoice(invoice);
     setMode(invoice.salesOrderId ? "so" : "standalone");
     setIsFormOpen(true);
   };
+
 
   const handleViewInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
@@ -177,49 +182,61 @@ export default function InvoicesPage() {
     },
   ];
 
-  const getActionItems = (invoice: Invoice) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
-          </svg>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleViewInvoice(invoice)}>
-          <Eye className="mr-2 h-4 w-4" />
-          View
-        </DropdownMenuItem>
-        {/* <DropdownMenuItem>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem> */}
-        <DropdownMenuItem onClick={() => handleEditInvoice(invoice)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => handleSendInvoice(invoice)}
-          // disabled={invoice.status === 'sent' || invoice.status === 'paid'}
-        >
-          <Mail className="mr-2 h-4 w-4" />
-          Send
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => window.print()}>
-          <FileText className="mr-2 h-4 w-4" />
-          Print
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => handleDeleteInvoice(invoice)}
-          className="text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  const getActionItems = (invoice: Invoice) => {
+    const handleEditClick = (inv: Invoice) => {
+      if (inv.status === "paid" || inv.status == "partial") {
+        toast.error("Editing is not available for paid invoices.");
+        return;
+      }
+      handleEditInvoice(inv);
+    };
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+            </svg>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleViewInvoice(invoice)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View
+          </DropdownMenuItem>
+
+          {/* 👇 Edit always visible but guarded */}
+          <DropdownMenuItem onClick={() => handleEditClick(invoice)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={() => handleSendInvoice(invoice)}>
+            <Mail className="mr-2 h-4 w-4" />
+            Send
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => window.print()}>
+            <FileText className="mr-2 h-4 w-4" />
+            Print
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleDeleteInvoice(invoice)}
+            className="text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+
 
   if (loading) {
     return (

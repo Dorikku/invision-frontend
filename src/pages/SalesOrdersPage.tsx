@@ -87,12 +87,12 @@ export default function SalesOrdersPage() {
 
       // Update the table list
       setSalesOrders(prev =>
-        prev.map(order => (order.id === salesOrderId ? updatedOrder : order))
+        prev.map(order => (String(order.id) === String(salesOrderId) ? updatedOrder : order))
       );
 
       // ✅ Update the selected order shown in the dialog
       setSelectedSalesOrder(prev =>
-        prev && prev.id === salesOrderId ? updatedOrder : prev
+        prev && String(prev.id) === String(salesOrderId) ? updatedOrder : prev
       );
     } catch (error) {
       console.error('Error refreshing sales order:', error);
@@ -166,7 +166,7 @@ export default function SalesOrdersPage() {
   const confirmDeleteSalesOrder = async () => {
     if (!salesOrderToDelete) return;
     try {
-      await deleteSalesOrder(salesOrderToDelete.id);
+      await deleteSalesOrder(Number(salesOrderToDelete.id));
       await loadSalesOrders();
       toast.success("Sales order deleted successfully");
     } catch (error) {
@@ -295,57 +295,85 @@ export default function SalesOrdersPage() {
     },
   ];
 
-  const getActionItems = (salesOrder: SalesOrder) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
-          </svg>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleViewSalesOrder(salesOrder)}>
-          <Eye className="mr-2 h-4 w-4" />
-          View
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEditSalesOrder(salesOrder)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleDuplicateSalesOrder(salesOrder)}>
-          <Copy className="mr-2 h-4 w-4" />
-          Duplicate
-        </DropdownMenuItem>
-        {["not_invoiced", "partial"].includes(salesOrder.invoiceStatus) && (
-          <DropdownMenuItem onClick={() => handleInvoiceStatusChange(salesOrder, 'invoiced')}>
-            <Receipt className="mr-2 h-4 w-4" />
-            Create Invoice
+  const getActionItems = (salesOrder: SalesOrder) => {
+    const editDisabled =
+      ["partial", "invoiced"].includes(salesOrder.invoiceStatus) ||
+      ["partial", "paid"].includes(salesOrder.paymentStatus) ||
+      ["partial", "shipped"].includes(salesOrder.shipmentStatus);
+
+    const handleEditClick = (so: SalesOrder) => {
+      if (editDisabled) {
+        toast.error("Orders can't be edited after invoicing, payment, or shipping.");
+        return;
+      }
+      handleEditSalesOrder(so);
+    };
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+            </svg>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleViewSalesOrder(salesOrder)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View
           </DropdownMenuItem>
-        )}
-        {["invoiced", "partial"].includes(salesOrder.invoiceStatus) &&
-          salesOrder.paymentStatus !== "paid" && (
-          <DropdownMenuItem onClick={() => handlePaymentStatusChange(salesOrder, 'paid')}>
-            <Wallet className="mr-2 h-4 w-4" />
-            Record Payment
+
+          {/* 👇 Edit always shown, but guarded */}
+          <DropdownMenuItem onClick={() => handleEditClick(salesOrder)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
           </DropdownMenuItem>
-        )}
-        {salesOrder.shipmentStatus !== "shipped" && (
-          <DropdownMenuItem onClick={() => handleShipmentStatusChange(salesOrder, 'shipped')}>
-            <Truck className="mr-2 h-4 w-4" />
-            Ship Items
+
+          <DropdownMenuItem onClick={() => handleDuplicateSalesOrder(salesOrder)}>
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate
           </DropdownMenuItem>
-        )}
-        <DropdownMenuItem 
-          onClick={() => handleDeleteSalesOrder(salesOrder)}
-          className="text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+
+          {["not_invoiced", "partial"].includes(salesOrder.invoiceStatus) && (
+            <DropdownMenuItem onClick={() => handleInvoiceStatusChange(salesOrder, "invoiced")}>
+              <Receipt className="mr-2 h-4 w-4" />
+              Create Invoice
+            </DropdownMenuItem>
+          )}
+
+          {["invoiced", "partial"].includes(salesOrder.invoiceStatus) &&
+            salesOrder.paymentStatus !== "paid" && (
+              <DropdownMenuItem onClick={() => handlePaymentStatusChange(salesOrder, "paid")}>
+                <Wallet className="mr-2 h-4 w-4" />
+                Record Payment
+              </DropdownMenuItem>
+            )}
+
+          {salesOrder.shipmentStatus !== "shipped" && (
+            <DropdownMenuItem onClick={() => handleShipmentStatusChange(salesOrder, "shipped")}>
+              <Truck className="mr-2 h-4 w-4" />
+              Ship Items
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuItem
+            onClick={() => handleDeleteSalesOrder(salesOrder)}
+            className="text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+
 
   if (loading) {
     return (
@@ -478,7 +506,7 @@ export default function SalesOrdersPage() {
           salesOrder={invoiceSalesOrder}
           onInvoiceCreated={() => {
             loadSalesOrders();
-            if (invoiceSalesOrder) refreshSalesOrder(invoiceSalesOrder.id);
+            if (invoiceSalesOrder) refreshSalesOrder(Number(invoiceSalesOrder.id));
             setIsCreateInvoiceOpen(false);
             setInvoiceSalesOrder(null);
           }}
@@ -492,7 +520,7 @@ export default function SalesOrdersPage() {
           salesOrder={paymentSalesOrder}
           onPaymentRecorded={() => {
             if (paymentSalesOrder) {
-              refreshSalesOrder(paymentSalesOrder.id);
+              refreshSalesOrder(Number(paymentSalesOrder.id));
             }
             loadSalesOrders();
             setIsRecordPaymentOpen(false);
@@ -510,7 +538,7 @@ export default function SalesOrdersPage() {
             loadSalesOrders();
             if (shipmentSalesOrder) {
               // ⏳ wait a bit before refreshing so backend has time to update
-              setTimeout(() => refreshSalesOrder(shipmentSalesOrder.id), 500);
+              setTimeout(() => refreshSalesOrder(Number(shipmentSalesOrder.id)), 500);
             }
             setIsCreateShipmentOpen(false);
             setShipmentSalesOrder(null);

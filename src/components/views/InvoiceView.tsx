@@ -8,6 +8,7 @@ import type { Invoice } from '../../types';
 import { useState } from 'react';
 import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
 import { Wallet } from 'lucide-react';
+import { toast } from '../ui/sonner';
 
 interface InvoiceViewProps {
   invoice: Invoice;
@@ -47,7 +48,17 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
           <Badge variant={getStatusBadgeVariant(invoice.status)}>
             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
           </Badge>
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (invoice.status === "paid" || invoice.status == "partial") {
+                toast.error("Editing is not available for paid invoices.");
+                return;
+              }
+              onEdit();
+            }}
+          >
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>

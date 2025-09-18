@@ -8,6 +8,7 @@ import type { SalesOrder } from '../../types';
 import CreateInvoiceDialog from '../forms/CreateInvoiceDialog';
 import CreateShipmentDialog from '../../components/forms/CreateShipmentDialog';
 import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
+import { toast } from '../ui/sonner';
 
 interface SalesOrderViewProps {
   salesOrder: SalesOrder;
@@ -111,7 +112,21 @@ export default function SalesOrderView({
             <Mail className="mr-2 h-4 w-4" />
             Send Email
           </Button>
-          <Button variant="outline" size="sm" onClick={onEdit}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (
+                ["partial", "invoiced"].includes(salesOrder.invoiceStatus) ||
+                ["partial", "paid"].includes(salesOrder.paymentStatus) ||
+                ["partial", "shipped"].includes(salesOrder.shipmentStatus)
+              ) {
+                toast.error("Editing is not available once the order is invoiced, paid, or shipped.");
+                return;
+              }
+              onEdit();
+            }}
+          >
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
@@ -304,7 +319,7 @@ export default function SalesOrderView({
         salesOrder={salesOrder}
         onInvoiceCreated={() => {
           setIsCreateInvoiceOpen(false);
-          onRefresh(salesOrder.id);
+          onRefresh(Number(salesOrder.id));
         }}
       />
 
@@ -314,7 +329,7 @@ export default function SalesOrderView({
         salesOrder={salesOrder}
         onPaymentRecorded={() => {
           setIsRecordPaymentOpen(false);
-          onRefresh(salesOrder.id);
+          onRefresh(Number(salesOrder.id));
         }}
       />
 
@@ -324,7 +339,7 @@ export default function SalesOrderView({
         salesOrder={salesOrder}
         onShipmentCreated={() => {
           setIsCreateShipmentOpen(false);
-          onRefresh(salesOrder.id);
+          onRefresh(Number(salesOrder.id));
         }}
       />
     </div>
