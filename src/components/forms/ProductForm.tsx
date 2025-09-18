@@ -82,6 +82,17 @@ export default function ProductsForm({ product, categories, onSuccess, onClose }
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let imageValue = formData.image;
+
+    // Normalize: keep only filename if it's a full URL
+    if (imageValue && (imageValue.startsWith("http") || imageValue.startsWith("https"))) {
+      const parts = imageValue.split("/uploads/products/");
+      if (parts.length > 1) {
+        imageValue = parts[1]; // just "product_xxx.jpg"
+      }
+    }    
+
     const payload = {
         name: formData.name,
         sku: formData.sku || null,   // ✅ null instead of ""
@@ -91,7 +102,7 @@ export default function ProductsForm({ product, categories, onSuccess, onClose }
         quantity: Number(formData.quantity),
         cost_price: Number(formData.cost_price),
         selling_price: Number(formData.selling_price),
-        image: formData.image || null,
+        image: imageValue || null,
     };
 
     try {
