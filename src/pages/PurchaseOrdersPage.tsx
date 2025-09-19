@@ -142,7 +142,20 @@ export default function PurchaseOrdersPage() {
       label: "Status",
       sortable: true,
       render: (value: string) => (
-        <Badge variant="secondary">{value}</Badge>
+        // <Badge variant="secondary">{value}</Badge>
+        <Badge
+          variant={
+            value === "draft"
+              ? "secondary"
+              : value === "partial_received"
+              ? "secondary"
+              : value === "received"
+              ? "success"
+              : "default"
+          }
+        >
+          {value}
+        </Badge>
       ),
     },
     {
