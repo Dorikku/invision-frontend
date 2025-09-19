@@ -137,15 +137,29 @@ export interface Invoice extends Record<string, unknown> {
 //   createdAt: string;
 //   updatedAt: string;
 // }
+
 export interface PurchaseOrderItem {
   id: number;
-  productName: string;
-  description?: string;
+  productId: number;
+  productName: string;        // convenience from backend join
+  description?: string | null;
   quantityOrdered: number;
+  quantityReceived: number;   // updated as receipts are created
   unitPrice: number;
   taxRate: number;
   lineTotal: number;
 }
+
+
+// export interface PurchaseOrderItem {
+//   id: number;
+//   productName: string;
+//   description?: string;
+//   quantityOrdered: number;
+//   unitPrice: number;
+//   taxRate: number;
+//   lineTotal: number;
+// }
 
 export interface PurchaseOrder extends Record<string, unknown> {
   id: number;

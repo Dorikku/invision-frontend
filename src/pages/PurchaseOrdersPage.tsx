@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import PurchaseOrderForm from "../components/forms/PurchaseOrderForm";
 import PurchaseOrderView from "../components/views/PurchaseOrderView";
 import type { PurchaseOrder } from "../types";
+import ReceiveItemDialog from "../components/forms/ReceiveItemDialog";
 
 // API functions
 
@@ -71,6 +72,8 @@ export default function PurchaseOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPO, setSelectedPO] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [isReceiveOpen, setIsReceiveOpen] = useState(false);
+
 
   useEffect(() => {
     loadPurchaseOrders();
@@ -180,7 +183,7 @@ export default function PurchaseOrdersPage() {
         <DropdownMenuItem onClick={() => { setSelectedPO(po); setShowForm(true); }}>
           <Edit className="mr-2 h-4 w-4" /> Edit
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toast.info("Receive items placeholder")}>
+        <DropdownMenuItem onClick={() => { setSelectedPO(po); setIsReceiveOpen(true); }}>
           <Package className="mr-2 h-4 w-4" /> Receive Items
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -302,7 +305,9 @@ export default function PurchaseOrdersPage() {
                 setShowForm(true);
               }}
               onReceive={() => {
-                toast.info("Receive items placeholder");
+                setIsViewOpen(false);
+                setSelectedPO(selectedPurchaseOrder);
+                setIsReceiveOpen(true);
               }}
             />
           )}
@@ -332,6 +337,19 @@ export default function PurchaseOrdersPage() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Receive Items Dialog */}
+      {selectedPO && (
+        <ReceiveItemDialog
+          open={isReceiveOpen}
+          onOpenChange={setIsReceiveOpen}
+          purchaseOrder={selectedPO}
+          onReceiptCreated={async () => {
+            await loadPurchaseOrders();
+            toast.success("Receipt recorded successfully");
+          }}
+        />
+      )}
+
     </div>
   );
 }

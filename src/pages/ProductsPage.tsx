@@ -156,7 +156,7 @@ export default function ProductsPage() {
       render: (_: any, item: Product) => item.quantity,
     },
     {
-      key: 'quantity',
+      key: 'status',
       label: 'Status',
       sortable: true,
       render: (value: number) => getStatusBadge(value),
