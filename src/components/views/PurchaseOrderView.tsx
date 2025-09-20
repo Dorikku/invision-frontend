@@ -143,9 +143,9 @@ export default function PurchaseOrderView({
               <TableRow>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Unit Price</TableHead>
+                <TableHead className="text-right px-10">Unit Price</TableHead>
                 <TableHead className="text-right">Tax</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right px-10">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
