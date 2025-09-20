@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Combobox } from '../ui/combobox';
 import { Plus, Trash2 } from 'lucide-react';
-import type { Quotation, Customer, Product, SalesPerson } from '../../types';
+import type { Quotation, Customer, Product, SalesPerson, SimpleCustomer } from '../../types';
 
 interface QuotationFormProps {
   quotation?: Quotation | null;
@@ -21,15 +21,30 @@ interface FormLineItem {
   productName: string;
   description: string;
   quantity: number;
+  unitCost: number;
   unitPrice: number;
   total: number;
   taxRate: number;
 }
 
+/**
+ * Local type: Product with stock info returned by /products-with-stock
+ */
+type ProductWithStock = Product & {
+  id: string;
+  selling_price: number;
+  cost_price: number;
+  stock_info: {
+    on_hand: number;
+    reserved: number;
+    available: number;
+  };
+};
+
 export default function QuotationForm({ quotation, onSave, onCancel }: QuotationFormProps) {
   const API_URL = import.meta.env.VITE_API_URL;
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<SimpleCustomer[]>([]);
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [salesPersons, setSalesPersons] = useState<SalesPerson[]>([]);
   const [formData, setFormData] = useState({
     salesPersonId: quotation?.salesPersonId || '1', // Default to sales person ID 1
@@ -43,42 +58,48 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Convert existing quotation items to form format
+  // Convert existing quotation items to form format and populate costs
   useEffect(() => {
-    if (quotation?.items) {
-      const formItems: FormLineItem[] = quotation.items.map(item => ({
-        tempId: item.id || Date.now().toString(), // Use existing ID as temp ID for editing
-        productId: String(item.productId),
-        productName: item.productName || '',
-        description: item.description || '',
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        total: item.total,
-        taxRate: item.taxRate,
-      }));
+    if (quotation?.items && products.length > 0) {
+      const formItems: FormLineItem[] = quotation.items.map(item => {
+        const productIdStr = String(item.productId);
+        const product = products.find(p => String(p.id) === productIdStr);
+        
+        return {
+          tempId: item.id || Date.now().toString(),
+          productId: productIdStr,
+          productName: item.productName || (product?.name || ''),
+          description: item.description || (product?.description || ''),
+          quantity: item.quantity,
+          unitCost: product?.cost_price || 0,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          taxRate: item.taxRate,
+        };
+      });
       setItems(formItems);
     }
-  }, [quotation]);
+  }, [quotation, products]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         // Fetch customers
-        const customerResponse = await fetch(`${API_URL}/customers`);
+        const customerResponse = await fetch(`${API_URL}/customers/simple`);
         if (!customerResponse.ok) {
           throw new Error('Failed to fetch customers');
         }
         const customerData = await customerResponse.json();
         setCustomers(customerData);
 
-        // Fetch products
-        const productResponse = await fetch(`${API_URL}/products`);
+        // Fetch products with stock info
+        const productResponse = await fetch(`${API_URL}/products-with-stock`);
         if (!productResponse.ok) {
           throw new Error('Failed to fetch products');
         }
         const productData = await productResponse.json();
-        setProducts(productData);
+        setProducts(productData as ProductWithStock[]);
 
         // Fetch SalesPersons
         const salesPersonResponse = await fetch(`${API_URL}/salespersons`);
@@ -101,9 +122,9 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
 
   const productOptions = products.map(product => ({
-    value: String(product.id),
+    value: String(product.id), // Ensure this is a string
     label: product.name,
-    description: `₱${product.selling_price.toFixed(2)} - ${product.description || ''}`
+    description: `₱${product.selling_price.toFixed(2)} - On hand: ${product.stock_info.on_hand}, Available: ${product.stock_info.available}`,
   }));
 
   const addItem = () => {
@@ -113,6 +134,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       productName: '',
       description: '',
       quantity: 1,
+      unitCost: 0,
       unitPrice: 0,
       total: 0,
       taxRate: 0,
@@ -125,11 +147,12 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
     updatedItems[index] = { ...updatedItems[index], [field]: value };
 
     if (field === 'productId') {
-      const product = products.find(p => String(p.id) === value);
+      const product = products.find(p => String(p.id) === String(value));
       if (product) {
         updatedItems[index].productName = product.name;
         updatedItems[index].description = product.description || '';
         updatedItems[index].unitPrice = product.selling_price;
+        updatedItems[index].unitCost = product.cost_price;
       }
     }
 
@@ -151,6 +174,16 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
     const tax = items.reduce((sum, item) => sum + (item.total * item.taxRate), 0);
     const total = subtotal + tax;
     return { subtotal, tax, total };
+  };
+
+  const hasInvalidQuantities = () => {
+    return items.some((item) => {
+      const selectedProduct = products.find((p) => String(p.id) === String(item.productId));
+      if (!selectedProduct) return false;
+      if (item.quantity > selectedProduct.stock_info.on_hand) return true;
+      if (item.quantity > selectedProduct.stock_info.available) return true;
+      return false;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -326,7 +359,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                 <TableRow>
                   <TableHead>Product</TableHead>
                   <TableHead>Qty</TableHead>
-                  <TableHead>Unit Price</TableHead>
+                  <TableHead>Selling Price</TableHead>
                   <TableHead>Tax</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead></TableHead>
@@ -336,25 +369,77 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                 {items.map((item, index) => (
                   <TableRow key={item.tempId}>
                     <TableCell>
-                      <Combobox
-                        options={productOptions}
-                        value={item.productId}
-                        onValueChange={(value) => updateItem(index, 'productId', value)}
-                        placeholder="Select product"
-                        searchPlaceholder="Search products..."
-                        emptyText="No products found."
-                        className="w-full"
-                      />
+                      <div className="flex flex-col h-[60px] justify-between">
+                        <Combobox
+                          options={productOptions}
+                          value={item.productId}
+                          onValueChange={(value) => updateItem(index, "productId", value)}
+                          placeholder="Select product"
+                          searchPlaceholder="Search products..."
+                          emptyText="No products found."
+                          className="w-full"
+                        />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {item.productId
+                            ? (() => {
+                                const p = products.find((p) => String(p.id) === String(item.productId));
+                                if (!p) return "";
+                                return `On hand: ${p.stock_info.on_hand} | Available: ${p.stock_info.available}`;
+                              })()
+                            : "\u00A0" /* keep blank space if no product */}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        className="w-18"
-                      />
+                      <div className="space-y-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateItem(index, "quantity", parseFloat(e.target.value) || 0)
+                          }
+                          className={`w-18 ${
+                            (() => {
+                              const selectedProduct = products.find((p) => String(p.id) === String(item.productId));
+                              if (!selectedProduct) return "";
+                              if (item.quantity > selectedProduct.stock_info.on_hand) {
+                                return "border-red-500";
+                              }
+                              if (item.quantity > selectedProduct.stock_info.available) {
+                                return "border-orange-500";
+                              }
+                              return "";
+                            })()
+                          }`}
+                        />
+
+                        {item.productId
+                          ? (() => {
+                              const selectedProduct = products.find((p) => String(p.id) === String(item.productId));
+                              if (!selectedProduct) return "\u00A0"; // keep blank space
+
+                              if (item.quantity > selectedProduct.stock_info.on_hand) {
+                                return (
+                                  <p className="text-xs text-red-600">
+                                    ❌ Only {selectedProduct.stock_info.on_hand} on hand.
+                                  </p>
+                                );
+                              }
+                              if (item.quantity > selectedProduct.stock_info.available) {
+                                return (
+                                  <p className="text-xs text-orange-600">
+                                    ⚠️ Only {selectedProduct.stock_info.available} available (reserved:{" "}
+                                    {selectedProduct.stock_info.reserved})
+                                  </p>
+                                );
+                              }
+
+                              return "\u00A0"; // keep blank space if no warning
+                            })()
+                          : "\u00A0" /* keep blank space if no product */}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Input
@@ -367,6 +452,9 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                         }
                         className="w-24"
                       />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        Cost price: ₱{item.unitCost?.toFixed(2) ?? "0.00"}
+                      </span>                      
                     </TableCell>
                     <TableCell>
                       <div className="relative w-22">
@@ -384,12 +472,16 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                           %
                         </span>
                       </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {"\u00A0"}
+                      </span>                      
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">₱{item.total.toFixed(2)}</span>
+                      <span className="font-medium relative top-[-11px]">₱{item.total.toFixed(2)}</span>
                     </TableCell>
                     <TableCell>
                       <Button
+                        className='relative top-[-11px]'
                         type="button"
                         variant="ghost"
                         size="sm"

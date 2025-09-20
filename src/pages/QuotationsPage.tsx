@@ -46,6 +46,23 @@ const rejectQuotation = async (id: number): Promise<Quotation> => {
   return response.json();
 };
 
+const checkStockAvailability = async (quotation: Quotation): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_URL}/products-with-stock`);
+    if (!response.ok) return false;
+    
+    const products = await response.json();
+    
+    return quotation.items.every(item => {
+      const product = products.find((p: any) => p.id === item.productId);
+      if (!product) return false;
+      return item.quantity <= product.stock_info.available;
+    });
+  } catch {
+    return false;
+  }
+};
+
 // -----------------
 // Page Component
 // -----------------
@@ -148,6 +165,13 @@ export default function QuotationsPage() {
 
   const handleAcceptQuotation = async (q: Quotation) => {
     try {
+      const stockAvailable = await checkStockAvailability(q);
+      
+      if (!stockAvailable) {
+        toast.error("Cannot accept quotation: Some quantities exceed available stock. Please edit the quotation first.");
+        return;
+      }
+      
       const updated = await acceptQuotation(q.id);
       refreshQuotation(updated.id);
       toast.success("Quotation accepted");

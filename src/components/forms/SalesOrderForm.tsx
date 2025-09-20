@@ -417,29 +417,30 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                           }`}
                         />
 
-                        {item.productId && (() => {
-                          const selectedProduct = products.find((p) => p.id === item.productId);
-                          if (!selectedProduct) return <p className="text-xs">&nbsp;</p>; // keeps spacing
+                        {item.productId
+                          ? (() => {
+                              const selectedProduct = products.find((p) => p.id === item.productId);
+                              if (!selectedProduct) return "\u00A0"; // keep blank space
 
-                          if (item.quantity > selectedProduct.stock_info.on_hand) {
-                            return (
-                              <p className="text-xs text-red-600">
-                                ❌ Only {selectedProduct.stock_info.on_hand} on hand.
-                              </p>
-                            );
-                          }
-                          if (item.quantity > selectedProduct.stock_info.available) {
-                            return (
-                              <p className="text-xs text-orange-600">
-                                ⚠️ Only {selectedProduct.stock_info.available} available (reserved:{" "}
-                                {selectedProduct.stock_info.reserved})
-                              </p>
-                            );
-                          }
+                              if (item.quantity > selectedProduct.stock_info.on_hand) {
+                                return (
+                                  <p className="text-xs text-red-600">
+                                    ❌ Only {selectedProduct.stock_info.on_hand} on hand.
+                                  </p>
+                                );
+                              }
+                              if (item.quantity > selectedProduct.stock_info.available) {
+                                return (
+                                  <p className="text-xs text-orange-600">
+                                    ⚠️ Only {selectedProduct.stock_info.available} available (reserved:{" "}
+                                    {selectedProduct.stock_info.reserved})
+                                  </p>
+                                );
+                              }
 
-                          // ✅ fallback: blank line for spacing
-                          return <p className="text-xs">&nbsp;</p>;
-                        })()}
+                              return "\u00A0"; // keep blank space if no warning
+                            })()
+                          : "\u00A0" /* keep blank space if no product */}
                       </div>
                     </TableCell>
                     <TableCell>
