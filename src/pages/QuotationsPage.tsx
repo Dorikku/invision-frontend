@@ -311,7 +311,7 @@ export default function QuotationsPage() {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingQuotation ? 'Edit Quotation' : 'Create Quotation'}</DialogTitle>
             <DialogDescription>
