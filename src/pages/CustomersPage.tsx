@@ -4,13 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Search, Filter, AlertTriangle, Edit } from "lucide-react";
+import { Plus, Search, Filter, AlertTriangle, Edit, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Customer, ActiveOrder, OrderHistoryItem } from "@/types";
 import CustomerForm from "@/components/forms/CustomerForm";
 import { toast } from "@/components/ui/sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-
 
 // ---------------- API Calls ----------------
 const API_URL = import.meta.env.VITE_API_URL;
@@ -33,6 +32,14 @@ const fetchOrderHistory = async (
   const res = await fetch(`${API_URL}/customers/${customerId}/order-history`);
   if (!res.ok) throw new Error("Failed to fetch order history");
   return res.json();
+};
+
+const deleteCustomer = async (id: number) => {
+  const res = await fetch(`${API_URL}/customers/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to delete customer");
+  }
 };
 
 // ---------------- Helpers ----------------
@@ -64,7 +71,7 @@ const derivedCustomerStatus = (customer: Customer): string => {
   if (customer.status === "regular") return "Regular";
   if (customer.status === "new_customer") return "New Customer";
   return "Unknown";
-}
+};
 
 const getStatusVariant = (status: string) => {
   switch (status.toLowerCase()) {
@@ -101,15 +108,13 @@ const getCustomerStatusVariant = (status: string) => {
 // ---------------- Component ----------------
 const CustomersPage = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -160,13 +165,9 @@ const CustomersPage = () => {
 
   const handleSaveCustomer = async (savedCustomer: Customer) => {
     try {
-      // Refresh customers list
       const data = await fetchCustomers();
       setCustomers(data);
-
-      // Keep the newly saved customer selected
       setSelectedCustomer(savedCustomer);
-
       setIsFormOpen(false);
       setEditingCustomer(null);
     } catch (error) {
@@ -174,9 +175,22 @@ const CustomersPage = () => {
       toast.error("Failed to refresh customers");
     }
   };
- 
 
-
+  const handleDeleteCustomer = async () => {
+    if (!selectedCustomer) return;
+    try {
+      await deleteCustomer(Number(selectedCustomer.id));
+      toast.success("Customer deleted successfully");
+      const data = await fetchCustomers();
+      setCustomers(data);
+      setSelectedCustomer(null); // clear right panel
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete customer");
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
 
   return (
     <ScrollArea>
@@ -223,8 +237,6 @@ const CustomersPage = () => {
             </div>
           </div>
 
-          
-
           {/* Customer List */}
           <div className="flex-1 overflow-y-auto">
             {filteredCustomers.map((customer) => (
@@ -232,9 +244,7 @@ const CustomersPage = () => {
                 key={customer.id}
                 onClick={() => setSelectedCustomer(customer)}
                 className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                  selectedCustomer?.id === customer.id
-                    ? "bg-blue-50"
-                    : ""
+                  selectedCustomer?.id === customer.id ? "bg-blue-50" : ""
                 }`}
               >
                 <div className="flex items-center">
@@ -245,19 +255,18 @@ const CustomersPage = () => {
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-gray-900">
-                        {customer.name}
-                      </h3>
-                      {/* <span className="text-sm text-gray-500">
-                        {customer.customer_since}
-                      </span> */}
-                      <div className={`w-2 h-2 rounded-full mr-2 ${
-                        customer.status === 'new_customer' ? 'bg-green-400' :
-                        customer.status === 'regular' ? 'bg-blue-400' : 'bg-purple-400'
-                      }`}></div>
+                      <h3 className="font-medium text-gray-900">{customer.name}</h3>
+                      <div
+                        className={`w-2 h-2 rounded-full mr-2 ${
+                          customer.status === "new_customer"
+                            ? "bg-green-400"
+                            : customer.status === "regular"
+                            ? "bg-blue-400"
+                            : "bg-purple-400"
+                        }`}
+                      ></div>
                     </div>
                     <p className="text-sm text-gray-600">{customer.email}</p>
-                    
                   </div>
                 </div>
               </div>
@@ -291,15 +300,17 @@ const CustomersPage = () => {
                     <div className="flex items-center gap-2">
                       <Badge
                         className="px-3 py-1 text-xs"
-                        variant={getCustomerStatusVariant(
-                          selectedCustomer.status
-                        )}
+                        variant={getCustomerStatusVariant(selectedCustomer.status)}
                       >
                         {derivedCustomerStatus(selectedCustomer)}
                       </Badge>
-                      <Button variant="outline" size="sm"onClick={() => handleEditCustomer(selectedCustomer)}>
+                      <Button variant="outline" size="sm" onClick={() => handleEditCustomer(selectedCustomer)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                        <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                        Delete
                       </Button>
                     </div>
                   </div>
@@ -337,18 +348,14 @@ const CustomersPage = () => {
               {selectedCustomer.has_unpaid_invoices && (
                 <Alert className="mb-6" variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    This customer has unpaid invoices.
-                  </AlertDescription>
+                  <AlertDescription>This customer has unpaid invoices.</AlertDescription>
                 </Alert>
               )}
 
               {/* Active Orders */}
               <Card className="mb-6">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                  <CardTitle className="text-lg font-semibold">
-                    Active Orders
-                  </CardTitle>
+                  <CardTitle className="text-lg font-semibold">Active Orders</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -375,16 +382,10 @@ const CustomersPage = () => {
                           return (
                             <tr key={order.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3">
-                                <Badge variant={getStatusVariant(status)}>
-                                  {status}
-                                </Badge>
+                                <Badge variant={getStatusVariant(status)}>{status}</Badge>
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {order.order_number}
-                              </td>
-                              <td className="px-4 py-3 text-sm text-gray-900">
-                                {order.date}
-                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{order.order_number}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">{order.date}</td>
                               <td className="px-4 py-3 text-sm text-gray-900">
                                 ₱{order.total.toLocaleString()}
                               </td>
@@ -393,10 +394,7 @@ const CustomersPage = () => {
                         })}
                         {activeOrders.length === 0 && (
                           <tr>
-                            <td
-                              colSpan={4}
-                              className="px-4 py-8 text-center text-gray-500"
-                            >
+                            <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                               No active orders for this customer
                             </td>
                           </tr>
@@ -410,51 +408,31 @@ const CustomersPage = () => {
               {/* Order History */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                  <CardTitle className="text-lg font-semibold">
-                    Order History
-                  </CardTitle>
+                  <CardTitle className="text-lg font-semibold">Order History</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">
-                            Item
-                          </th>
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">
-                            Quantity
-                          </th>
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">
-                            Unit Price
-                          </th>
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">
-                            Total Sales
-                          </th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Item</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Quantity</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Unit Price</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Total Sales</th>
                         </tr>
                       </thead>
                       <tbody>
                         {orderHistory.map((order) => (
                           <React.Fragment key={order.id}>
                             <tr className="bg-gray-50">
-                              <td
-                                colSpan={4}
-                                className="px-2 py-2 text-sm font-medium text-gray-700"
-                              >
+                              <td colSpan={4} className="px-2 py-2 text-sm font-medium text-gray-700">
                                 {order.order_number} - {order.date}
                               </td>
                             </tr>
                             {order.items.map((item, idx) => (
-                              <tr
-                                key={`${order.id}-${idx}`}
-                                className="border-b border-gray-100"
-                              >
-                                <td className="px-2 py-2 text-sm text-gray-900">
-                                  {item.productName}
-                                </td>
-                                <td className="px-2 py-2 text-sm text-gray-900">
-                                  {item.quantity}
-                                </td>
+                              <tr key={`${order.id}-${idx}`} className="border-b border-gray-100">
+                                <td className="px-2 py-2 text-sm text-gray-900">{item.productName}</td>
+                                <td className="px-2 py-2 text-sm text-gray-900">{item.quantity}</td>
                                 <td className="px-2 py-2 text-sm text-gray-900">
                                   ₱{item.unitPrice.toLocaleString()}
                                 </td>
@@ -467,10 +445,7 @@ const CustomersPage = () => {
                         ))}
                         {orderHistory.length === 0 && (
                           <tr>
-                            <td
-                              colSpan={4}
-                              className="px-4 py-8 text-center text-gray-500"
-                            >
+                            <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                               No past orders for this customer
                             </td>
                           </tr>
@@ -484,16 +459,14 @@ const CustomersPage = () => {
           )}
         </ScrollArea>
       </div>
+
+      {/* Create/Edit Customer Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingCustomer ? "Edit Customer" : "Create New Customer"}
-            </DialogTitle>
+            <DialogTitle>{editingCustomer ? "Edit Customer" : "Create New Customer"}</DialogTitle>
             <DialogDescription>
-              {editingCustomer
-                ? "Update the customer details below."
-                : "Fill in the details to create a new customer."}
+              {editingCustomer ? "Update the customer details below." : "Fill in the details to create a new customer."}
             </DialogDescription>
           </DialogHeader>
           <CustomerForm
@@ -503,7 +476,27 @@ const CustomersPage = () => {
           />
         </DialogContent>
       </Dialog>
-            
+
+      {/* Delete Customer Confirmation */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Customer</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{selectedCustomer?.name}</span>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteCustomer}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </ScrollArea>
   );
 };

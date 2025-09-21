@@ -33,11 +33,21 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const isValidEmail = (email: string) => {
+    if (!email) return true; // empty is allowed
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name.trim()) {
       toast.error("Name is required");
+      return;
+    }
+
+    if (formData.email && !isValidEmail(formData.email)) {
+      toast.error("Invalid email format");
       return;
     }
 
@@ -49,10 +59,18 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
 
       const method = supplier ? "PUT" : "POST";
 
+      // 🔹 Clean up data before sending
+      const bodyData: Record<string, any> = { ...formData };
+      Object.keys(bodyData).forEach((key) => {
+        if (bodyData[key] === "") {
+          bodyData[key] = null; // convert empty strings to null
+        }
+      });
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(bodyData),
       });
 
       if (!response.ok) {
@@ -70,6 +88,7 @@ export default function SupplierForm({ supplier, onSave, onCancel }: SupplierFor
       setSaving(false);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
