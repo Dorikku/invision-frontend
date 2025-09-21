@@ -46,20 +46,37 @@ const rejectQuotation = async (id: number): Promise<Quotation> => {
   return response.json();
 };
 
-const checkStockAvailability = async (quotation: Quotation): Promise<boolean> => {
+const checkStockAvailability = async (quotation: Quotation): Promise<{ isValid: boolean; message?: string }> => {
   try {
     const response = await fetch(`${API_URL}/products-with-stock`);
-    if (!response.ok) return false;
+    if (!response.ok) {
+      return { isValid: false, message: "Failed to fetch stock information" };
+    }
     
     const products = await response.json();
     
-    return quotation.items.every(item => {
-      const product = products.find((p: any) => p.id === item.productId);
-      if (!product) return false;
-      return item.quantity <= product.stock_info.available;
-    });
-  } catch {
-    return false;
+    for (const item of quotation.items) {
+      const product = products.find((p: any) => String(p.id) === String(item.productId));
+      
+      if (!product) {
+        return { 
+          isValid: false, 
+          message: `Product "${item.productName}" not found in inventory` 
+        };
+      }
+      
+      if (item.quantity > product.stock_info.available) {
+        return { 
+          isValid: false, 
+          message: `Insufficient stock for "${item.productName}": requested ${item.quantity}, available ${product.stock_info.available}` 
+        };
+      }
+    }
+    
+    return { isValid: true };
+  } catch (error) {
+    console.error('Stock check error:', error);
+    return { isValid: false, message: "Error checking stock availability" };
   }
 };
 
@@ -165,17 +182,18 @@ export default function QuotationsPage() {
 
   const handleAcceptQuotation = async (q: Quotation) => {
     try {
-      const stockAvailable = await checkStockAvailability(q);
+      const stockCheck = await checkStockAvailability(q);
       
-      if (!stockAvailable) {
-        toast.error("Cannot accept quotation: Some quantities exceed available stock. Please edit the quotation first.");
+      if (!stockCheck.isValid) {
+        toast.error(stockCheck.message || "Cannot accept quotation: Some quantities exceed available stock. Please edit the quotation first.");
         return;
       }
       
       const updated = await acceptQuotation(q.id);
       refreshQuotation(updated.id);
       toast.success("Quotation accepted");
-    } catch {
+    } catch (error) {
+      console.error('Accept quotation error:', error);
       toast.error("Failed to accept quotation");
     }
   };
@@ -263,7 +281,7 @@ export default function QuotationsPage() {
         <DropdownMenuItem onClick={() => setSelectedQuotation(q)}>
           <Eye className="mr-2 h-4 w-4" /> View
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => { console.log('Editing quotation:', q); handleEditQuotation(q); }}>
+        <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
           <Edit className="mr-2 h-4 w-4" /> Edit
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleDuplicateQuotation(q)}>

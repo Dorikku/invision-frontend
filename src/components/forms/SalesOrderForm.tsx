@@ -105,9 +105,28 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
         if (!productResponse.ok) {
           throw new Error('Failed to fetch products');
         }
-        const productData = await productResponse.json();
-        // Cast to local ProductWithStock type
-        setProducts(productData as ProductWithStock[]);
+        let productData: ProductWithStock[] = await productResponse.json();
+
+        // ✅ ADJUST AVAILABLE STOCK IF EDITING AN ORDER
+        if (salesOrder?.items) {
+          productData = productData.map((product) => {
+            const matchingItem = salesOrder.items.find(
+              (item) => item.productId === product.id
+            );
+            if (matchingItem) {
+              return {
+                ...product,
+                stock_info: {
+                  ...product.stock_info,
+                  available: product.stock_info.available + matchingItem.quantity,
+                },
+              };
+            }
+            return product;
+          });
+        }
+
+        setProducts(productData);
 
         // Fetch SalesPersons
         const salesPersonResponse = await fetch(`${API_URL}/salespersons`);
@@ -125,7 +144,8 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
     };
 
     fetchData();
-  }, []);
+  }, [salesOrder]);
+
 
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
 
