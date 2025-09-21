@@ -14,6 +14,7 @@ import CreateInvoiceDialog from '../components/forms/CreateInvoiceDialog';
 import RecordPaymentDialog from '../components/forms/RecordPaymentDialog';
 import CreateShipmentDialog from '../components/forms/CreateShipmentDialog';
 import { Input } from '@/components/ui/input';
+import { useLocation } from "react-router-dom";
 
 
 
@@ -47,6 +48,7 @@ const deleteSalesOrder = async (id: number): Promise<void> => {
 };
 
 export default function SalesOrdersPage() {
+  const location = useLocation();
   const [salesOrders, setSalesOrders] = useState<SalesOrder[]>([]);
   const [selectedSalesOrder, setSelectedSalesOrder] = useState<SalesOrder | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -65,6 +67,10 @@ export default function SalesOrdersPage() {
 
   useEffect(() => {
     loadSalesOrders();
+    // ⬅️ If Dashboard passed openForm flag, auto-open the form
+    if (location.state?.openForm) {
+      setIsFormOpen(true);
+    }
   }, []);
 
   const loadSalesOrders = async () => {

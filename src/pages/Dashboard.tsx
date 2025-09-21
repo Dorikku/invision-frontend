@@ -6,8 +6,10 @@ import StatsCard from "@/components/charts/StatsCard";
 import MonthlySalesChart from "@/components/charts/MonthlySalesChart";
 import WeeklySalesChart from "@/components/charts/WeeklySalesChart";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [statsData] = useState([
     {
       id: 1,
@@ -65,7 +67,9 @@ export default function Dashboard() {
             <Button variant="outline">
               Generate Sales Report
             </Button>
-            <Button>
+            <Button
+              onClick={() => navigate("/sales-orders", { state: { openForm: true } })} // ⬅️ update
+            >
               + Add New Order
             </Button>
           </div>
