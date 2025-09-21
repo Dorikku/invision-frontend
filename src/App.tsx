@@ -43,7 +43,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <BrowserRouter basename="/invision-frontend">
+        <BrowserRouter basename="/invision-frontend/">
           <div className="flex h-screen bg-gray-50">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
             <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">

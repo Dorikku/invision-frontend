@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
   type TooltipProps,
 } from "recharts";
-import { monthlySalesData } from "../../data/inventoryData";
 import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 // Format currency as PHP
@@ -26,9 +25,11 @@ const formatCurrency = (value: number) => {
 };
 
 // Custom tooltip component with typing
-const CustomTooltip: React.FC<
-  TooltipProps<ValueType, NameType>
-> = ({ active, payload, label }) => {
+const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+  active,
+  payload,
+  label,
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
@@ -36,21 +37,27 @@ const CustomTooltip: React.FC<
         <p className="text-sm text-blue-600">
           Sales: {formatCurrency(payload[0].value as number)}
         </p>
-        <p className="text-sm text-green-600">
-          Profit: {formatCurrency(payload[1].value as number)}
-        </p>
+        {payload.length > 1 && (
+          <p className="text-sm text-green-600">
+            Profit: {formatCurrency(payload[1].value as number)}
+          </p>
+        )}
       </div>
     );
   }
   return null;
 };
 
-export default function MonthlySalesChart() {
+type MonthlySalesChartProps = {
+  data: { month: string; sales: number; profit: number; orders: number }[];
+};
+
+export default function MonthlySalesChart({ data }: MonthlySalesChartProps) {
   return (
     <div className="h-72">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          data={monthlySalesData}
+          data={data}
           margin={{
             top: 10,
             right: 30,

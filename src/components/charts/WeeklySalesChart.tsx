@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
   type TooltipProps,
 } from "recharts";
-import { weeklySalesData } from "../../data/inventoryData";
 import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 // Format currency as PHP
@@ -26,9 +25,11 @@ const formatCurrency = (value: number) => {
 };
 
 // Custom tooltip with typing
-const CustomTooltip: React.FC<
-  TooltipProps<ValueType, NameType>
-> = ({ active, payload, label }) => {
+const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+  active,
+  payload,
+  label,
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border border-gray-200 shadow-md rounded-md">
@@ -56,12 +57,16 @@ const CustomTooltip: React.FC<
   return null;
 };
 
-export default function WeeklySalesChart() {
+type WeeklySalesChartProps = {
+  data: { day: string; sales: number; profit: number; orders: number }[];
+};
+
+export default function WeeklySalesChart({ data }: WeeklySalesChartProps) {
   return (
     <div className="h-72">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          data={weeklySalesData}
+          data={data}
           margin={{
             top: 5,
             right: 30,
