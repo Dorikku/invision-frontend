@@ -281,9 +281,12 @@ export default function QuotationsPage() {
         <DropdownMenuItem onClick={() => setSelectedQuotation(q)}>
           <Eye className="mr-2 h-4 w-4" /> View
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
-          <Edit className="mr-2 h-4 w-4" /> Edit
-        </DropdownMenuItem>
+        {/* ✏️ Only allow edit if status is "open" */}
+        {q.status === "open" && (
+          <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
+            <Edit className="mr-2 h-4 w-4" /> Edit
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => handleDuplicateQuotation(q)}>
           <Copy className="mr-2 h-4 w-4" /> Duplicate
         </DropdownMenuItem>
@@ -381,6 +384,8 @@ export default function QuotationsPage() {
                 setSelectedQuotation(null);
                 handleEditQuotation(selectedQuotation);
                 }}
+                onAccept={handleAcceptQuotation}
+                onReject={handleRejectQuotation}
             />
             )}
         </DialogContent>

@@ -3,16 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Badge } from '../../components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Separator } from '../../components/ui/separator';
-import { Edit, Download, Send } from 'lucide-react';
+import { Edit, Download, Send, XCircle, CheckCircle } from 'lucide-react';
 import type { Quotation } from '../../types';
 
 interface QuotationViewProps {
   quotation: Quotation;
   onClose: () => void;
   onEdit: () => void;
+  onAccept?: (quotation: Quotation) => void;
+  onReject?: (quotation: Quotation) => void;
 }
 
-export default function QuotationView({ quotation, onClose, onEdit }: QuotationViewProps) {
+export default function QuotationView({ quotation, onClose, onEdit, onAccept, onReject }: QuotationViewProps) {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'open': return 'primary';
@@ -40,10 +42,13 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
           <Badge variant={getStatusBadgeVariant(quotation.status)}>
             {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
           </Badge>
-          <Button variant="outline" size="sm" onClick={onEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
+          {/* ✏️ Edit only if quotation is open */}
+          {quotation.status === "open" && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Download className="mr-2 h-4 w-4" />
             Print
@@ -174,6 +179,16 @@ export default function QuotationView({ quotation, onClose, onEdit }: QuotationV
       )}
 
       <div className="flex justify-end space-x-2">
+        {quotation.status === "open" && (
+          <>
+            <Button onClick={() => onAccept?.(quotation)}>
+              <CheckCircle className="mr-2 h-4 w-4" /> Accept
+            </Button>
+            <Button variant="destructive" onClick={() => onReject?.(quotation)}>
+              <XCircle className="mr-2 h-4 w-4" /> Reject
+            </Button>
+          </>
+        )}        
         <Button variant="outline" onClick={onClose}>
           Close
         </Button>

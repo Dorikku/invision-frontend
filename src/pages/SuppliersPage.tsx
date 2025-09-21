@@ -293,10 +293,10 @@ const SuppliersPage = () => {
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
-                      {/* <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-                        <Trash2 className="h-4 w-4 mr-2" />
+                      <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                        <Trash2 className="h-4 w-4 mr-2 text-red-500" />
                         Delete
-                      </Button> */}
+                      </Button>
                     </div>
                   </div>
 
