@@ -98,9 +98,8 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       >
         {/* Header */}
         <div className="p-6 flex items-center">
-          {/* <Box className="h-8 w-8 text-[hsl(var(--primary))]" /> */}
           <img
-            src="./src/assets/invision_logo2.png"
+            src="/invision_logo2.png"
             alt="InVision Logo"
             className="h-9 w-9 object-contain -mt-2"
           />
