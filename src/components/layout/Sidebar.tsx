@@ -12,7 +12,7 @@ import {
   X
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import invisionLogo from "/src/assets/invision_logo2.png";
+import invisionLogo from "@/assets/invision_logo2.png";
 
 type MenuItem = {
   name: string;
