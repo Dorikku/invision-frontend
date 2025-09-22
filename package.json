@@ -4,14 +4,13 @@
   "type": "module",
   "packageManager": "pnpm@8.10.0",
   "scripts": {
-    "clean-gh-pages-cache": "rimraf node_modules/.cache/gh-pages",
     "dev": "vite",
     "build": "vite build && npm run copy404",
     "copy404": "copyfiles dist/index.html dist/404.html",
     "lint": "eslint --quiet ./src",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "npm run clean-gh-pages-cache && gh-pages -d dist --add"
+    "deploy": "gh-pages -d dist --add --no-cache"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
