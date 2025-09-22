@@ -1,0 +1,23 @@
+{
+  "index.html": {
+    "file": "assets/index-wV09nUBi.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "css": [
+      "assets/index-CPMN6Ql7.css"
+    ],
+    "assets": [
+      "assets/invision_logo2-CtVXb9kG.png",
+      "assets/invision_logo2-CTECIjmB.svg"
+    ]
+  },
+  "src/assets/invision_logo2.png": {
+    "file": "assets/invision_logo2-CtVXb9kG.png",
+    "src": "src/assets/invision_logo2.png"
+  },
+  "src/assets/invision_logo2.svg": {
+    "file": "assets/invision_logo2-CTECIjmB.svg",
+    "src": "src/assets/invision_logo2.svg"
+  }
+}
