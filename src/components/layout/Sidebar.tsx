@@ -40,6 +40,7 @@ const menuItems: MenuItem[] = [
   },
   { name: "Customers", id: "customers", href: "/customers", icon: Users },
   { name: "Suppliers", id: "suppliers", href: "/suppliers", icon: Truck },
+  // { name: "Sales Persons", id: "sales_persons", href: "/sales-persons", icon: Users },
   { name: "Reports", id: "reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", id: "settings", href: "/settings", icon: Settings }
 ];
