@@ -12,7 +12,4 @@ export default defineConfig({
     },
   },
   base: "/invision-frontend/",
-  build: {
-    manifest: true,
-  },
 })
