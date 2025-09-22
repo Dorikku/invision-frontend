@@ -52,7 +52,7 @@ const App = () => {
                 <main className="p-6">
                   <Routes>
                     <Route index element={<Dashboard />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    {/* <Route path="/dashboard" element={<Dashboard />} /> */}
                     <Route path="/quotations" element={<QuotationsPage />} />
                     <Route path="/sales-orders" element={<SalesOrdersPage />} />
                     <Route path="/invoices" element={<InvoicesPage />} />
