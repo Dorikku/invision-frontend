@@ -12,6 +12,7 @@ import {
   X
 } from "lucide-react";
 import { cn } from "../../lib/utils";
+import invisionLogo from "/src/assets/invision_logo2.png";
 
 type MenuItem = {
   name: string;
@@ -99,7 +100,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Header */}
         <div className="p-6 flex items-center">
           <img
-            src="/invision_logo2.png"
+            src={invisionLogo}
             alt="InVision Logo"
             className="h-9 w-9 object-contain -mt-2"
           />
