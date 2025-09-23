@@ -419,9 +419,10 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                           min="0"
                           step="1"
                           value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(index, "quantity", parseFloat(e.target.value) || 0)
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateItem(index, "quantity", val === "" ? "" : parseFloat(val));
+                          }}
                           className={`w-18 ${
                             (() => {
                               const selectedProduct = products.find((p) => p.id === item.productId);
@@ -469,9 +470,10 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                         min="0"
                         step="0.01"
                         value={item.unitPrice}
-                        onChange={(e) =>
-                          updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)
-                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(index, 'unitPrice', val === "" ? "" : parseFloat(val));
+                        }}
                         className="w-24"
                       />
                       <span className="text-xs text-muted-foreground whitespace-nowrap">

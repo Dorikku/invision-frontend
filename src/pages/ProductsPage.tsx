@@ -110,11 +110,15 @@ export default function ProductsPage() {
   };
 
   const getStatusBadge = (quantity: number) => {
-    return (
-      <Badge variant={quantity < 10 ? 'destructive' : 'success'}>
-        {quantity < 10 ? 'Low Stock' : 'In Stock'}
-      </Badge>
-    );
+    if (quantity === 0) {
+      return <Badge variant="destructive" className="text-destructive">Out of Stock</Badge>;
+    }
+
+    if (quantity < 10) {
+      return <Badge variant="secondary">Low Stock</Badge>;
+    }
+
+    return <Badge variant="success">In Stock</Badge>;
   };
 
   const columns = [
@@ -159,7 +163,7 @@ export default function ProductsPage() {
       key: 'status',
       label: 'Status',
       sortable: true,
-      render: (value: number) => getStatusBadge(value),
+      render: (_: any, item: Product) => getStatusBadge(item.quantity),
     },
     {
       key: 'cost_price',
