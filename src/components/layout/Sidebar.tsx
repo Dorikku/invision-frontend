@@ -25,7 +25,16 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { name: "Dashboard", id: "dashboard", href: "/", icon: Home },
-  { name: "Products", id: "products", href: "/products", icon: Box },
+  {
+    name: "Products",
+    id: "products",
+    icon: Box,
+    hasSubmenu: true,
+    subItems: [
+      { name: "Inventory", id: "products_inventory", href: "/products" },
+      { name: "Categories", id: "products_categories", href: "/categories" }
+    ]
+  },
   {
     name: "Orders",
     id: "orders",
