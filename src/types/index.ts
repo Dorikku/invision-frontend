@@ -21,6 +21,7 @@ export interface Category{
 
 export interface Product extends Record<string, unknown>{
   id: string;
+  product_code?: string;
   name: string;
   sku?: string;
   description?: string;

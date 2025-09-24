@@ -142,11 +142,17 @@ export default function ProductsPage() {
       label: 'Name',
       sortable: true,
     },
-    // {
-    //   key: 'sku',
-    //   label: 'SKU',
-    //   sortable: true,
-    // },
+    {
+      key: 'product_code',
+      label: 'ID',
+      sortable: true,
+      render: (value: string) => value || <Badge variant="outline" className="text-muted-foreground"><ImageOff className="mr-2 h-4 w-4" />No Code</Badge>,
+    },
+    {
+      key: 'sku',
+      label: 'SKU',
+      sortable: true,
+    },
     {
       key: 'category_name',
       label: 'Category',
