@@ -23,7 +23,7 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
       email: 'pentamaxelectrical@gmail.com',
       website: 'www.pentamax.com',
       registrationNumber: '314-359-848-00000',
-      logo: '2.png'
+      logo: '3.png'
     };
 
     const company = companyInfo || defaultCompanyInfo;
@@ -105,10 +105,8 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
             <div className="flex justify-between items-start">
               <div className='flex'>
                 <div>
-                  {company.logo ? (
+                  {company.logo && (
                     <img src={company.logo} alt={company.name} className="h-30" />
-                  ) : (
-                    <div className="text-3xl font-bold text-gray-900 mb-4">{company.name}</div>
                   )}
                 </div>
                 <div className="text-sm text-gray-600 space-y-1 ml-4 mt-5">

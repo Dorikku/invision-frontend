@@ -84,6 +84,7 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
           email: "pentamaxelectrical@gmail.com",
           website: "www.pentamax.com",
           registrationNumber: "314-359-848-00000",
+          logo: "3.png"
         }} />
       </div>
 
