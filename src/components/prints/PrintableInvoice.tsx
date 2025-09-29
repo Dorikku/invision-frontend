@@ -192,8 +192,8 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
                     <td colSpan={4} className="py-3 px-2 text-sm text-gray-500 text-center">No items</td>
                   </tr>
                 )}
-                {/* Add empty rows if items are less than 5 for consistent layout */}
-                {invoice.items && invoice.items.length < 5 && Array.from({ length: 5 - invoice.items.length }).map((_, index) => (
+                {/* Add empty rows if items are less than 3 for consistent layout */}
+                {invoice.items && invoice.items.length < 3 && Array.from({ length: 3 - invoice.items.length }).map((_, index) => (
                   <tr key={`empty-${index}`} className="border-b border-gray-300">
                     <td className="py-3 px-2">&nbsp;</td>
                     {/* <td className="py-3 px-2">&nbsp;</td> */}
