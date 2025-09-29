@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, Eye, Edit, Trash2, FileText, Mail, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,23 +10,19 @@ import { toast } from 'sonner';
 import type { Invoice } from '../types';
 import InvoiceForm from '../components/forms/InvoiceForm';
 import InvoiceView from '../components/views/InvoiceView';
+import PrintableInvoice from '../components/prints/PrintableInvoice'; // Add this import
+import { useReactToPrint } from 'react-to-print'; // Install: npm install react-to-print
 import { Input } from '@/components/ui/input';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 // Mock API functions
 const fetchInvoices = async (): Promise<Invoice[]> => {
-  // Simulate API delay
-  // await new Promise(resolve => setTimeout(resolve, 500));
-  
   const response = await fetch(`${API_URL}/invoices`);
   if (!response.ok) {
     throw new Error('Failed to fetch invoices');
   }
   return response.json();
-
-  // console.log('Fetched invoices:', dummyInvoices);
-  // return dummyInvoices;
 };
 
 const deleteInvoiceAPI = async (id: string): Promise<void> => {
@@ -38,14 +34,8 @@ const deleteInvoiceAPI = async (id: string): Promise<void> => {
   }
 };
 
-
 const sendInvoiceAPI = async (id: string): Promise<void> => {
-  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // In a real application, this would be:
-  // await fetch(`/api/invoices/${id}/send`, { method: 'POST' });
-  
   console.log(`Sent invoice ${id}`);
 };
 
@@ -58,7 +48,20 @@ export default function InvoicesPage() {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [mode, setMode] = useState<"so" | "standalone" | null>(null);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [invoiceToPrint, setInvoiceToPrint] = useState<Invoice | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
+  // Company information - you can move this to a config file or fetch from API
+  const companyInfo = {
+    name: 'PENTAMAX ELECTRICAL SUPPLY',
+    address: 'Arty 1 Subd. Brgy. Talipapa Novaliches Quezon City',
+    phone: '0916 453 8406',
+    email: 'pentamaxelectrical@gmail.com',
+    website: 'www.pentamax.com',
+    registrationNumber: '314-359-848-00000',
+    logo: '3.png' // Add your company logo path
+  };
 
   useEffect(() => {
     loadInvoices();
@@ -79,10 +82,9 @@ export default function InvoicesPage() {
 
   const handleCreateInvoice = () => {
     setEditingInvoice(null);
-    setMode(null); // reset mode so user chooses type
+    setMode(null);
     setIsFormOpen(true);
   };
-
 
   const handleEditInvoice = (invoice: Invoice) => {
     if (invoice.status === "paid") {
@@ -94,7 +96,6 @@ export default function InvoicesPage() {
     setIsFormOpen(true);
   };
 
-
   const handleViewInvoice = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setIsViewOpen(true);
@@ -104,7 +105,6 @@ export default function InvoicesPage() {
     if (window.confirm('Are you sure you want to delete this invoice?')) {
       try {
         await deleteInvoiceAPI(invoice.id);
-        // Remove from local state
         setInvoices(prev => prev.filter(i => i.id !== invoice.id));
         toast.success('Invoice deleted successfully');
       } catch (error) {
@@ -117,16 +117,27 @@ export default function InvoicesPage() {
   const handleSendInvoice = async (invoice: Invoice) => {
     try {
       await sendInvoiceAPI(invoice.id);
-      // Update local state to reflect sent status
-      // setInvoices(prev => prev.map(i => 
-      //   i.id === invoice.id ? { ...i, status: 'sent' } : i
-      // ));
       toast.success(`Invoice ${invoice.invoiceNumber} sent to customer`);
     } catch (error) {
       console.error('Failed to send invoice:', error);
       toast.error('Failed to send invoice');
     }
   };
+
+  const handlePrintInvoice = (invoice: Invoice) => {
+    setInvoiceToPrint(invoice);
+    setIsPrintDialogOpen(true);
+  };
+
+  // Using useReactToPrint hook
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Invoice-${invoiceToPrint?.invoiceNumber || ''}`,
+    onAfterPrint: () => {
+      setIsPrintDialogOpen(false);
+      toast.success('Invoice printed successfully');
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -172,7 +183,7 @@ export default function InvoicesPage() {
       label: 'Total',
       sortable: true,
       render: (value: number | null) =>
-        value != null ? `₱${value.toLocaleString()}` : "—",  // 👈 safe
+        value != null ? `₱${value.toLocaleString()}` : "—",
     },
     {
       key: 'status',
@@ -209,18 +220,15 @@ export default function InvoicesPage() {
             <Eye className="mr-2 h-4 w-4" />
             View
           </DropdownMenuItem>
-
-          {/* 👇 Edit always visible but guarded */}
           <DropdownMenuItem onClick={() => handleEditClick(invoice)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-
           <DropdownMenuItem onClick={() => handleSendInvoice(invoice)}>
             <Mail className="mr-2 h-4 w-4" />
             Send
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => window.print()}>
+          <DropdownMenuItem onClick={() => handlePrintInvoice(invoice)}>
             <FileText className="mr-2 h-4 w-4" />
             Print
           </DropdownMenuItem>
@@ -235,8 +243,6 @@ export default function InvoicesPage() {
       </DropdownMenu>
     );
   };
-
-
 
   if (loading) {
     return (
@@ -259,10 +265,6 @@ export default function InvoicesPage() {
           <Plus className="mr-2 h-4 w-4" />
           New Invoice
         </Button>
-        {/* <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Invoice
-        </Button> */}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -306,10 +308,8 @@ export default function InvoicesPage() {
         </Card>
       </div>
 
-
       <Card>
         <CardContent className="pt-5">
-          {/* 🔎 Search bar */}
           <div className="flex items-center justify-between mb-4">
             <div className="relative w-[250px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -322,52 +322,49 @@ export default function InvoicesPage() {
             </div>
           </div>
 
-          {/* 📊 DataTable */}
           <DataTable
             data={invoices}
             columns={columns}
-            searchTerm={searchTerm} // 👈 pass search term into DataTable
+            searchTerm={searchTerm}
             onRowClick={handleViewInvoice}
             actions={getActionItems}
           />
         </CardContent>
       </Card>
 
-<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-  <DialogContent
-    className={`${!mode ? "max-w-md" : "max-w-4xl"} max-h-[90vh] overflow-y-auto`}
-  >
-    <DialogHeader>
-      <DialogTitle>
-        {editingInvoice ? "Edit Invoice" : "New Invoice"}
-      </DialogTitle>
-      <DialogDescription>
-        {editingInvoice ? "Update the invoice details." : "Create a new invoice."}
-      </DialogDescription>
-    </DialogHeader>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent
+          className={`${!mode ? "max-w-md" : "max-w-4xl"} max-h-[90vh] overflow-y-auto`}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {editingInvoice ? "Edit Invoice" : "New Invoice"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingInvoice ? "Update the invoice details." : "Create a new invoice."}
+            </DialogDescription>
+          </DialogHeader>
 
-    {!mode ? (
-      // type selector
-      <div className="flex flex-col gap-4 py-4">
-        <Button onClick={() => setMode("so")}>From Sales Order</Button>
-        <Button onClick={() => setMode("standalone")} variant="outline">
-          Standalone
-        </Button>
-      </div>
-    ) : (
-      <InvoiceForm
-        mode={mode}
-        invoice={editingInvoice}
-        onInvoiceCreated={() => {
-          setIsFormOpen(false);
-          loadInvoices();
-        }}
-        onCancel={() => setIsFormOpen(false)}
-      />
-    )}
-  </DialogContent>
-</Dialog>
-
+          {!mode ? (
+            <div className="flex flex-col gap-4 py-4">
+              <Button onClick={() => setMode("so")}>From Sales Order</Button>
+              <Button onClick={() => setMode("standalone")} variant="outline">
+                Standalone
+              </Button>
+            </div>
+          ) : (
+            <InvoiceForm
+              mode={mode}
+              invoice={editingInvoice}
+              onInvoiceCreated={() => {
+                setIsFormOpen(false);
+                loadInvoices();
+              }}
+              onCancel={() => setIsFormOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -379,13 +376,49 @@ export default function InvoicesPage() {
               invoice={selectedInvoice} 
               onClose={() => setIsViewOpen(false)}
               onEdit={() => {
-                // set(selectedInvoice);
-                // setIsFormOpen(true);
                 setIsViewOpen(false);
                 handleEditInvoice(selectedInvoice);
               }}
               onUpdated={loadInvoices}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Print Dialog */}
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Print Invoice</DialogTitle>
+            <DialogDescription>
+              Preview your invoice before printing
+            </DialogDescription>
+          </DialogHeader>
+          
+          {invoiceToPrint && (
+            <div>
+              <div className="mb-4 flex justify-end space-x-2 no-print">
+                <Button onClick={handlePrint}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Print Invoice
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsPrintDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+              
+              {/* Printable Invoice Component */}
+              <div className="border rounded-lg">
+                <PrintableInvoice
+                  ref={printRef}
+                  invoice={invoiceToPrint as any}
+                  companyInfo={companyInfo}
+                />
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

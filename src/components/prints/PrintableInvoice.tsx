@@ -1,95 +1,279 @@
-// components/PrintableInvoice.tsx
-import React, { forwardRef } from "react";
-import type { SalesOrder } from "@/types";
+import React, { forwardRef } from 'react';
 
-interface Props {
-  salesOrder: SalesOrder;
+// Use the actual Invoice type from your project
+interface PrintableInvoiceProps {
+  invoice: any; // We'll use 'any' here to avoid type conflicts, or you can import the actual Invoice type
+  companyInfo?: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    website?: string;
+    logo?: string;
+    registrationNumber?: string;
+  };
 }
 
-const PrintableInvoice = forwardRef<HTMLDivElement, Props>(({ salesOrder }, ref) => {
-  return (
-    <div ref={ref} className="p-8 font-sans text-sm text-black bg-white">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">INVOICE</h1>
-          <p className="text-gray-600">Invoice #: {salesOrder.orderNumber}</p>
-          <p className="text-gray-600">
-            Date: {new Date(salesOrder.date).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="text-right">
-          <h2 className="text-lg font-semibold">Your Company Name</h2>
-          <p>123 Business Street</p>
-          <p>City, Country</p>
-          <p>Email: info@company.com</p>
-        </div>
-      </div>
+const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
+  ({ invoice, companyInfo }, ref) => {
+    const defaultCompanyInfo = {
+      name: 'PENTAMAX ELECTRICAL SUPPLY',
+      address: 'Arty 1 Subdivision Brgy. Talipapa Novaliches Quezon City',
+      phone: '0916 453 8406',
+      email: 'pentamaxelectrical@gmail.com',
+      website: 'www.pentamax.com',
+      registrationNumber: '314-359-848-00000',
+      logo: '2.png'
+    };
 
-      {/* Customer Info */}
-      <div className="mb-6">
-        <h3 className="font-semibold mb-1">Bill To:</h3>
-        <p>{salesOrder.customerName}</p>
-        {salesOrder.customerAddress && <p>{salesOrder.customerAddress}</p>}
-        {salesOrder.customerEmail && <p>{salesOrder.customerEmail}</p>}
-      </div>
+    const company = companyInfo || defaultCompanyInfo;
 
-      {/* Items Table */}
-      <table className="w-full border-collapse mb-6">
-        <thead>
-          <tr className="bg-gray-100 border-b">
-            <th className="text-left p-2">Item</th>
-            <th className="text-right p-2">Qty</th>
-            <th className="text-right p-2">Unit Price</th>
-            <th className="text-right p-2">Tax</th>
-            <th className="text-right p-2">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {salesOrder.items.map((item, i) => (
-            <tr key={i} className="border-b">
-              <td className="p-2">{item.productName}</td>
-              <td className="p-2 text-right">{item.quantity}</td>
-              <td className="p-2 text-right">₱ {item.unitPrice.toFixed(2)}</td>
-              <td className="p-2 text-right">{(item.taxRate * 100).toFixed(0)}%</td>
-              <td className="p-2 text-right">₱ {item.total.toFixed(2)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
 
-      {/* Totals */}
-      <div className="flex justify-end mb-8">
-        <div className="w-1/3 space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>₱ {salesOrder.subtotal.toFixed(2)}</span>
+    const formatCurrency = (amount: number) => {
+      return `₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
+
+    // Handle different item property names (description vs name)
+    const getItemDescription = (item: any) => {
+      return item.description || item.name || 'Item';
+    };
+
+    const getItemQuantity = (item: any) => {
+      return item.quantity || item.qty || 1;
+    };
+
+    const getItemUnitPrice = (item: any) => {
+      return item.unitPrice || item.price || item.rate || 0;
+    };
+
+    const getItemTotal = (item: any) => {
+      return item.total || item.amount || (getItemQuantity(item) * getItemUnitPrice(item));
+    };
+
+    return (
+      <>
+        <style>
+          {`
+            @media print {
+              @page {
+                size: A4;
+                margin: 0;
+              }
+              
+              .print-container {
+                width: 210mm !important;
+                min-height: 297mm !important;
+                padding: 15mm !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+              }
+              
+              .page-break {
+                page-break-after: always;
+              }
+              
+              .no-print {
+                display: none !important;
+              }
+
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                color-adjust: exact;
+              }
+            }
+            
+            @media screen {
+              .print-container {
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                margin: 60px auto;
+              }
+            }
+          `}
+        </style>
+        
+        <div ref={ref} className="print-container bg-white p-8 max-w-[210mm] mx-auto">
+          {/* Header Section */}
+          <div className="mb-8 border-b-2 border-gray-800 pb-6">
+            <div className="flex justify-between items-start">
+              <div className='flex'>
+                <div>
+                  {company.logo ? (
+                    <img src={company.logo} alt={company.name} className="h-30" />
+                  ) : (
+                    <div className="text-3xl font-bold text-gray-900 mb-4">{company.name}</div>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600 space-y-1 ml-4 mt-5">
+                  <div>{company.address}</div>
+                  <div>Phone: {company.phone}</div>
+                  <div>Email: {company.email}</div>
+                  {/* {company.website && <div>{company.website}</div>} */}
+                  {company.registrationNumber && (
+                    <div>TIN #: {company.registrationNumber}</div>
+                  )}
+                </div>
+              </div>
+              <div className="text-right">
+                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">INVOICE</h1>
+                <div className="mt-4 space-y-1">
+                  <div className="text-lg font-semibold">#{invoice.invoiceNumber}</div>
+                  <div className="text-sm text-gray-600">
+                    <div>Date: {formatDate(invoice.date)}</div>
+                    <div>Due Date: {formatDate(invoice.dueDate)}</div>
+                  </div>
+                </div>
+                {/* {invoice.status && (
+                  <div className="mt-3">
+                    <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full
+                      ${invoice.status === 'paid' ? 'bg-green-100 text-green-800' : 
+                        invoice.status === 'overdue' ? 'bg-red-100 text-red-800' : 
+                        invoice.status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'}`}>
+                      {invoice.status.toUpperCase()}
+                    </span>
+                  </div>
+                )} */}
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span>Tax:</span>
-            <span>₱ {salesOrder.tax.toFixed(2)}</span>
+
+          {/* Billing Information */}
+          <div className="mb-8 grid grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Bill To:</h3>
+              <div className="text-sm text-gray-700 space-y-1">
+                <div className="font-semibold text-base">{invoice.customerName}</div>
+                {(invoice.billingAddress || invoice.customerAddress) && (
+                  <div className="whitespace-pre-line">{invoice.billingAddress || invoice.customerAddress}</div>
+                )}
+                {invoice.customerEmail && <div>{invoice.customerEmail}</div>}
+                {invoice.customerPhone && <div>{invoice.customerPhone}</div>}
+              </div>
+            </div>
+            {invoice.shippingAddress && (
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Ship To:</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <div className="whitespace-pre-line">{invoice.shippingAddress}</div>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex justify-between font-bold text-lg border-t pt-2">
-            <span>Total:</span>
-            <span>₱ {salesOrder.total.toFixed(2)}</span>
+
+          {/* Items Table */}
+          <div className="mb-8">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-gray-800">
+                  <th className="text-left py-3 px-2 text-sm font-bold text-gray-900 uppercase tracking-wider">Item Description</th>
+                  <th className="text-center py-3 px-2 text-sm font-bold text-gray-900 uppercase tracking-wider w-20">Qty</th>
+                  <th className="text-right py-3 px-2 text-sm font-bold text-gray-900 uppercase tracking-wider w-32">Unit Price</th>
+                  <th className="text-right py-3 px-2 text-sm font-bold text-gray-900 uppercase tracking-wider w-32">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items && invoice.items.length > 0 ? (
+                  invoice.items.map((item: any, index: number) => (
+                    <tr key={item.id || index} className="border-b border-gray-300">
+                      <td className="py-3 px-2 text-sm text-gray-700">{getItemDescription(item)}</td>
+                      <td className="py-3 px-2 text-sm text-gray-700 text-center">{getItemQuantity(item)}</td>
+                      <td className="py-3 px-2 text-sm text-gray-700 text-right">{formatCurrency(getItemUnitPrice(item))}</td>
+                      <td className="py-3 px-2 text-sm text-gray-700 text-right font-medium">{formatCurrency(getItemTotal(item))}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="border-b border-gray-300">
+                    <td colSpan={4} className="py-3 px-2 text-sm text-gray-500 text-center">No items</td>
+                  </tr>
+                )}
+                {/* Add empty rows if items are less than 5 for consistent layout */}
+                {invoice.items && invoice.items.length < 5 && Array.from({ length: 5 - invoice.items.length }).map((_, index) => (
+                  <tr key={`empty-${index}`} className="border-b border-gray-300">
+                    <td className="py-3 px-2">&nbsp;</td>
+                    {/* <td className="py-3 px-2">&nbsp;</td> */}
+                    {/* <td className="py-3 px-2">&nbsp;</td> */}
+                    {/* <td className="py-3 px-2">&nbsp;</td> */}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals Section */}
+          <div className="flex justify-end mb-8">
+            <div className="w-80">
+              <div className="space-y-2">
+                <div className="flex justify-between py-2 border-b border-gray-300">
+                  <span className="text-sm text-gray-700">Subtotal</span>
+                  <span className="text-sm text-gray-900 font-medium">{formatCurrency(invoice.subtotal || invoice.total || 0)}</span>
+                </div>
+                {(invoice.tax || invoice.taxAmount) && (invoice.tax > 0 || invoice.taxAmount > 0) && (
+                  <div className="flex justify-between py-2 border-b border-gray-300">
+                    <span className="text-sm text-gray-700">Tax (12%)</span>
+                    <span className="text-sm text-gray-900 font-medium">{formatCurrency(invoice.tax || invoice.taxAmount || 0)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between py-3 border-t-2 border-gray-800">
+                  <span className="text-lg font-bold text-gray-900">Total Due</span>
+                  <span className="text-lg font-bold text-gray-900">{formatCurrency(invoice.total || 0)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes and Terms */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {invoice.notes && (
+              <div>
+                <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wider">Notes:</h3>
+                <div className="text-sm text-gray-600 whitespace-pre-line">{invoice.notes}</div>
+              </div>
+            )}
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wider">Terms & Conditions:</h3>
+              <div className="text-sm text-gray-600 whitespace-pre-line">
+                {invoice.terms || 'Payment is due within 30 days from the invoice date.\nLate payments may incur additional charges.\nPlease reference invoice number on all payments.'}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-16 pt-8 border-t border-gray-300">
+            <div className="grid grid-cols-2 gap-8">
+              <div>
+                <div className="text-xs text-gray-500 mb-8">
+                  <div>Authorized Signature</div>
+                  <div className="mt-8 border-t border-gray-400 w-48"></div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500">
+                  <div>Thank you for your business!</div>
+                  <div className="mt-2">For questions, please contact our billing department</div>
+                  <div>{company.email} | {company.phone}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Page number for multi-page invoices */}
+          <div className="text-center text-xs text-gray-400 mt-8">
+            Page 1 of 1
           </div>
         </div>
-      </div>
+      </>
+    );
+  }
+);
 
-      {/* Notes */}
-      {salesOrder.notes && (
-        <div>
-          <h3 className="font-semibold mb-1">Notes:</h3>
-          <p>{salesOrder.notes}</p>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="text-center text-gray-500 text-xs mt-12">
-        Thank you for your business!
-      </div>
-    </div>
-  );
-});
+PrintableInvoice.displayName = 'PrintableInvoice';
 
 export default PrintableInvoice;

@@ -5,10 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Separator } from '../../components/ui/separator';
 import { Edit, Download } from 'lucide-react';
 import type { Invoice } from '../../types';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
 import { Wallet } from 'lucide-react';
 import { toast } from '../ui/sonner';
+import { useReactToPrint } from "react-to-print";
+import PrintableInvoice from "../../components/prints/PrintableInvoice";
 
 interface InvoiceViewProps {
   invoice: Invoice;
@@ -19,6 +21,8 @@ interface InvoiceViewProps {
 
 export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: InvoiceViewProps) {
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -31,9 +35,12 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Invoice-${invoice.invoiceNumber}`,
+    onAfterPrint: () => toast.success("Invoice printed successfully"),
+  });
+
 
   return (
     <div className="space-y-6">
@@ -68,6 +75,18 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
           </Button>
         </div>
       </div>
+
+      <div className="hidden">
+        <PrintableInvoice ref={printRef} invoice={invoice} companyInfo={{
+          name: "PENTAMAX ELECTRICAL SUPPLY",
+          address: "Arty 1 Subdivision Brgy. Talipapa Novaliches Quezon City",
+          phone: "0916 453 8406",
+          email: "pentamaxelectrical@gmail.com",
+          website: "www.pentamax.com",
+          registrationNumber: "314-359-848-00000",
+        }} />
+      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
