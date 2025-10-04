@@ -80,12 +80,12 @@ export default function ProductsPage() {
         const response = await fetch(`${API_URL}/products/${product.id}`, {
           method: 'DELETE',
         });
-        if (!response.ok) throw new Error('Failed to delete product');
+        if (!response.ok) throw new Error('This is included inside 1 or more documents and cannot be deleted');
         setProducts(prev => prev.filter(p => p.id !== product.id));
         toast.success('Product deleted successfully');
       } catch (error) {
         console.error('Error deleting product:', error);
-        toast.error('Failed to delete product');
+        toast.error((error as Error).message);
       }
     }
   };
