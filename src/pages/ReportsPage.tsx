@@ -189,15 +189,15 @@ const handleDownload = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                         <div className="p-4 border rounded">
                           <h3 className="text-sm font-medium">Total Sales</h3>
-                          <p className="text-2xl font-bold">₱{reportData.total_sales}</p>
+                          <p className="text-2xl font-bold">₱{Number(reportData.total_sales).toLocaleString()}</p>
                         </div>
                         <div className="p-4 border rounded">
                           <h3 className="text-sm font-medium">Total Profit</h3>
-                          <p className="text-2xl font-bold">₱{reportData.total_profit}</p>
+                          <p className="text-2xl font-bold">₱{Number(reportData.total_profit).toLocaleString()}</p>
                         </div>
                         <div className="p-4 border rounded">
                           <h3 className="text-sm font-medium">Total Orders</h3>
-                          <p className="text-2xl font-bold">{reportData.total_orders}</p>
+                          <p className="text-2xl font-bold">{Number(reportData.total_orders).toLocaleString()}</p>
                         </div>
                       </div>
                       {/* Add table or chart for items */}

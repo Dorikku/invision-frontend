@@ -349,7 +349,7 @@ export default function InvoiceStandaloneForm({
                           className="w-24"
                         />
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          ₱{it.unitCost?.toFixed(2) ?? "0.00"}
+                          ₱{it.unitCost?.toLocaleString() ?? "0.00"}
                         </span>
                       </div>
                     </TableCell>
@@ -371,7 +371,7 @@ export default function InvoiceStandaloneForm({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">₱{it.total.toFixed(2)}</span>
+                      <span className="font-medium">₱{it.total.toLocaleString()}</span>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -397,15 +397,15 @@ export default function InvoiceStandaloneForm({
         <div className="space-y-4">
           <div className="flex justify-between">
             <span>Subtotal:</span>
-            <span className="font-medium">₱ {subtotal.toFixed(2)}</span>
+            <span className="font-medium">₱ {subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Tax:</span>
-            <span className="font-medium">₱ {tax.toFixed(2)}</span>
+            <span className="font-medium">₱ {tax.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-lg font-bold">
             <span>Total:</span>
-            <span>₱ {total.toFixed(2)}</span>
+            <span>₱ {total.toLocaleString()}</span>
           </div>
         </div>
       </div>

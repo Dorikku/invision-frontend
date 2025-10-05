@@ -477,7 +477,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                         className="w-24"
                       />
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        Cost price: ₱{item.unitCost?.toFixed(2) ?? "0.00"}
+                        Cost price: ₱{item.unitCost?.toLocaleString() ?? "0.00"}
                       </span>                      
                     </TableCell>
                     <TableCell>
@@ -501,7 +501,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
                       </span>                      
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium relative top-[-11px]">₱{item.total.toFixed(2)}</span>
+                      <span className="font-medium relative top-[-11px]">₱{item.total.toLocaleString()}</span>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -527,15 +527,15 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
         <div className="space-y-4">
           <div className="flex justify-between">
             <span>Subtotal:</span>
-            <span className="font-medium">₱ {subtotal.toFixed(2)}</span>
+            <span className="font-medium">₱ {subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Tax:</span>
-            <span className="font-medium">₱ {tax.toFixed(2)}</span>
+            <span className="font-medium">₱ {tax.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-lg font-bold">
             <span>Total:</span>
-            <span>₱ {total.toFixed(2)}</span>
+            <span>₱ {total.toLocaleString()}</span>
           </div>
         </div>
       </div>

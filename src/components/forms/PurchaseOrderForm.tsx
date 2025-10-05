@@ -433,7 +433,7 @@ export default function PurchaseOrderForm({
                     </TableCell>
 
                     <TableCell>
-                      <span className="font-medium">₱ {item.lineTotal.toFixed(2)}</span>
+                      <span className="font-medium">₱ {item.lineTotal.toLocaleString()}</span>
                     </TableCell>
 
                     <TableCell>
@@ -454,15 +454,15 @@ export default function PurchaseOrderForm({
         <div className="space-y-2">
           <div className="flex justify-between">
             <span>Subtotal:</span>
-            <span className="font-medium">₱ {subtotal.toFixed(2)}</span>
+            <span className="font-medium">₱ {subtotal.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span>Tax:</span>
-            <span className="font-medium">₱ {tax.toFixed(2)}</span>
+            <span className="font-medium">₱ {tax.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-lg font-bold">
             <span>Total:</span>
-            <span>₱ {total.toFixed(2)}</span>
+            <span>₱ {total.toLocaleString()}</span>
           </div>
         </div>
       </div>

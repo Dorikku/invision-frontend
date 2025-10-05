@@ -268,13 +268,13 @@ const SalesPersonPage = () => {
                     <div>
                       <p className="text-sm text-gray-600">Total Sales</p>
                       <p className="text-xl font-semibold text-gray-900">
-                        ₱{selectedSalesPerson.total_spent}
+                        ₱{selectedSalesPerson.total_spent.toLocaleString()}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Average Sales Value</p>
                       <p className="text-xl font-semibold text-gray-900">
-                        ₱{selectedSalesPerson.average_order_value}
+                        ₱{selectedSalesPerson.average_order_value.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -315,7 +315,7 @@ const SalesPersonPage = () => {
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-900">{order.order_number}</td>
                               <td className="px-4 py-3 text-sm text-gray-900">{order.date}</td>
-                              <td className="px-4 py-3 text-sm text-gray-900">₱{order.total.toLocaleString()}</td>
+                              <td className="px-4 py-3 text-sm text-gray-900">₱{Number(order.total).toLocaleString()}</td>
                             </tr>
                           );
                         })}

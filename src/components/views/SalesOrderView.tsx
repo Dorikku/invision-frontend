@@ -238,9 +238,9 @@ export default function SalesOrderView({
                   )}
                 </div>
                 <div className="col-span-2 text-right">{item.quantity}</div>
-                <div className="col-span-2 text-right">₱ {item.unitPrice}</div>
+                <div className="col-span-2 text-right">₱ {item.unitPrice.toLocaleString()}</div>
                 <div className="col-span-2 text-right">{item.taxRate * 100}%</div>
-                <div className="col-span-2 text-right">₱ {item.total}</div>
+                <div className="col-span-2 text-right">₱ {item.total.toLocaleString()}</div>
               </div>
             ))}
           </div>
@@ -256,16 +256,16 @@ export default function SalesOrderView({
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span>₱ {salesOrder.subtotal.toFixed(2)}</span>
+              <span>₱ {salesOrder.subtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax:</span>
-              <span>₱ {salesOrder.tax.toFixed(2)}</span>
+              <span>₱ {salesOrder.tax.toLocaleString()}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-lg font-bold">
               <span>Total:</span>
-              <span>₱ {salesOrder.total.toFixed(2)}</span>
+              <span>₱ {salesOrder.total.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>

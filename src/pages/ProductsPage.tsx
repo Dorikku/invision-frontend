@@ -175,13 +175,13 @@ export default function ProductsPage() {
       key: 'cost_price',
       label: 'Cost Price',
       sortable: true,
-      render: (value: number) => `₱${value.toFixed(2)}`,
+      render: (value: number) => `₱${value.toLocaleString()}`,
     },
     {
       key: 'selling_price',
       label: 'Selling Price',
       sortable: true,
-      render: (value: number) => `₱${value.toFixed(2)}`,
+      render: (value: number) => `₱${value.toLocaleString()}`,
     },
   ];
 

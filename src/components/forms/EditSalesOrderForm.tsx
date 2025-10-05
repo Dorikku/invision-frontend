@@ -99,7 +99,7 @@ export default function EditSalesOrderForm({ salesOrder, onSave, onCancel, savin
   const productOptions = products.map(product => ({
     value: product.id,
     label: product.name,
-    description: `₱${product.selling_price.toFixed(2)} - ${product.description || ''}`,
+    description: `₱${product.selling_price.toLocaleString()} - ${product.description || ''}`,
   }));
 
   const addItem = () => {

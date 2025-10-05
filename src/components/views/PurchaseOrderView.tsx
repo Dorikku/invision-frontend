@@ -160,9 +160,9 @@ export default function PurchaseOrderView({
                     </div>
                   </TableCell>
                   <TableCell className="text-right">{item.quantityOrdered}</TableCell>
-                  <TableCell className="text-right">₱ {item.unitPrice.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">₱ {item.unitPrice.toLocaleString()}</TableCell>
                   <TableCell className="text-right">{(item.taxRate * 100).toFixed(0)}%</TableCell>
-                  <TableCell className="text-right font-medium">₱ {item.lineTotal}</TableCell>
+                  <TableCell className="text-right font-medium">₱ {item.lineTotal.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -175,16 +175,16 @@ export default function PurchaseOrderView({
             <div className="w-64 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>₱ {purchaseOrder.subtotal.toFixed(2)}</span>
+                <span>₱ {purchaseOrder.subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax:</span>
-                <span>₱ {purchaseOrder.tax.toFixed(2)}</span>
+                <span>₱ {purchaseOrder.tax.toLocaleString()}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>₱ {purchaseOrder.total.toFixed(2)}</span>
+                <span>₱ {purchaseOrder.total.toLocaleString()}</span>
               </div>
             </div>
           </div>

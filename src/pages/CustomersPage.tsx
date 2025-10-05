@@ -325,13 +325,13 @@ const CustomersPage = () => {
                     <div>
                       <p className="text-sm text-gray-600">Total Spent</p>
                       <p className="text-xl font-semibold text-gray-900">
-                        ₱{selectedCustomer.total_spent.toLocaleString()}
+                        ₱{Number(selectedCustomer.total_spent).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Average Order Value</p>
                       <p className="text-xl font-semibold text-gray-900">
-                        ₱{selectedCustomer.average_order_value.toLocaleString()}
+                        ₱{Number(selectedCustomer.average_order_value).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div>

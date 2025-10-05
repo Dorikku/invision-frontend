@@ -168,9 +168,9 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
                     </div>
                   </TableCell>
                   <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">₱{item.unitPrice}</TableCell>
+                  <TableCell className="text-right">₱{item.unitPrice.toLocaleString()}</TableCell>
                   <TableCell className="text-right">{item.taxRate * 100}%</TableCell>
-                  <TableCell className="text-right font-medium">₱{item.total}</TableCell>
+                  <TableCell className="text-right font-medium">₱{item.total.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -182,16 +182,16 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
             <div className="w-64 space-y-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>₱{invoice.subtotal.toFixed(2)}</span>
+                <span>₱{invoice.subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax:</span>
-                <span>₱{invoice.tax.toFixed(2)}</span>
+                <span>₱{invoice.tax.toLocaleString()}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span>₱{invoice.total.toFixed(2)}</span>
+                <span>₱{invoice.total.toLocaleString()}</span>
               </div>
             </div>
           </div>
