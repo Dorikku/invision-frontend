@@ -140,7 +140,7 @@ export default function RecordPaymentDialog({
 
   const validateForm = () => {
     if (!selectedInvoiceId) return 'Please select an invoice';
-    if (amount <= 0 || amount > remainingBalance)
+    if (isNaN(amount) || amount > remainingBalance)
       return 'Amount must be between 0 and remaining balance';
     if (!method) return 'Please select a payment method';
     return '';
@@ -280,7 +280,7 @@ export default function RecordPaymentDialog({
                     max={remainingBalance}
                     value={amount}
                     onChange={(e) =>
-                      setAmount(parseFloat(e.target.value) || 0)
+                      setAmount(parseFloat(e.target.value))
                     }
                   />
                 </div>
