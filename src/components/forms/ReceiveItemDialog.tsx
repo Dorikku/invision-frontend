@@ -30,7 +30,7 @@ interface ReceiveItemDialogProps {
 
 interface LineItemState {
   poItem: PurchaseOrderItem;
-  receivingNow: number;
+  receivingNow: string;
 }
 
 export default function ReceiveItemDialog({
@@ -55,7 +55,7 @@ export default function ReceiveItemDialog({
     if (open && purchaseOrder) {
       const items: LineItemState[] = purchaseOrder.items.map((item) => ({
         poItem: item,
-        receivingNow: 0,
+        receivingNow: "0",
       }));
       setLineItems(items);
       setReceiptDate(new Date().toISOString().split("T")[0]);
@@ -80,26 +80,31 @@ export default function ReceiveItemDialog({
     }
   }, [open]);
 
-  const handleQuantityChange = (index: number, value: number) => {
+  const handleQuantityChange = (index: number, value: string) => {
     const newItems = [...lineItems];
     const poItem = newItems[index].poItem;
-    const remaining =
-      poItem.quantityOrdered - (poItem.quantityReceived || 0);
+    const remaining = poItem.quantityOrdered - (poItem.quantityReceived || 0);
 
-    newItems[index].receivingNow = Math.max(
-      0,
-      Math.min(value, remaining)
-    );
+    // Allow empty string while typing
+    if (value === "") {
+      newItems[index].receivingNow = "";
+    } else {
+      const num = Math.max(0, Math.min(parseInt(value) || 0, remaining));
+      newItems[index].receivingNow = num.toString();
+    }
+
     setLineItems(newItems);
   };
 
+
   const handleSubmit = async () => {
     const itemsToReceive = lineItems
-      .filter((li) => li.receivingNow > 0)
+      .filter((li) => parseInt(li.receivingNow) > 0)
       .map((li) => ({
         poItemId: li.poItem.id,
-        quantityReceived: li.receivingNow,
+        quantityReceived: parseInt(li.receivingNow),
       }));
+
 
     if (itemsToReceive.length === 0) {
       toast.error("Please enter at least one quantity to receive.");
@@ -230,12 +235,7 @@ export default function ReceiveItemDialog({
                         min={0}
                         max={remaining}
                         value={li.receivingNow}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            index,
-                            parseInt(e.target.value) || 0
-                          )
-                        }
+                        onChange={(e) => handleQuantityChange(index, e.target.value)}
                         disabled={remaining === 0}
                       />
                     </div>
