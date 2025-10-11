@@ -329,10 +329,11 @@ export default function InvoiceStandaloneForm({
                         type="number"
                         min="0"
                         step="1"
-                        value={it.quantity}
-                        onChange={(e) =>
-                          updateItem(idx, "quantity", parseFloat(e.target.value) || 0)
-                        }
+                        value={it.quantity === 0 ? "" : it.quantity}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(idx, "quantity", val === "" ? "" : parseFloat(val));
+                        }}
                         className="w-18"
                       />
                     </TableCell>
@@ -342,10 +343,11 @@ export default function InvoiceStandaloneForm({
                           type="number"
                           min="0"
                           step="0.01"
-                          value={it.unitPrice}
-                          onChange={(e) =>
-                            updateItem(idx, "unitPrice", parseFloat(e.target.value) || 0)
-                          }
+                          value={it.unitPrice === 0 ? "" : it.unitPrice}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateItem(idx, "unitPrice", val === "" ? "" : parseFloat(val));
+                          }}
                           className="w-24"
                         />
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -359,12 +361,13 @@ export default function InvoiceStandaloneForm({
                           type="number"
                           min="0"
                           step="0.01"
-                          value={it.taxRate * 100}
-                          onChange={(e) =>
-                            updateItem(idx, "taxRate", parseFloat(e.target.value) / 100 || 0)
-                          }
+                          value={it.taxRate === 0 ? "" : it.taxRate * 100}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateItem(idx, "taxRate", val === "" ? "" : parseFloat(val) / 100);
+                          }}
                           className="pr-6"
-                        />
+                      />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">
                           %
                         </span>

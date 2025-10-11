@@ -156,6 +156,13 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
       }
     }
 
+    if (field === "quantity" || field === "unitPrice" || field === "taxRate" || field === "productId") {
+      const q = Number(updatedItems[index].quantity || 0);
+      const p = Number(updatedItems[index].unitPrice || 0);
+      updatedItems[index].total = q * p;
+    }
+
+
     // Recalculate total when quantity, unitPrice, or taxRate changes
     if (field === 'quantity' || field === 'unitPrice' || field === 'productId' || field === 'taxRate') {
       const subtotal = updatedItems[index].quantity * updatedItems[index].unitPrice;
@@ -396,24 +403,22 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                           type="number"
                           min="0"
                           step="1"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(index, "quantity", parseFloat(e.target.value) || 0)
-                          }
+                          value={item.quantity === 0 ? "" : item.quantity}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateItem(index, "quantity", val === "" ? "" : Number(val));
+                          }}
                           className={`w-18 ${
                             (() => {
                               const selectedProduct = products.find((p) => String(p.id) === String(item.productId));
                               if (!selectedProduct) return "";
-                              if (item.quantity > selectedProduct.stock_info.on_hand) {
-                                return "border-red-500";
-                              }
-                              if (item.quantity > selectedProduct.stock_info.available) {
-                                return "border-orange-500";
-                              }
+                              if (item.quantity > selectedProduct.stock_info.on_hand) return "border-red-500";
+                              if (item.quantity > selectedProduct.stock_info.available) return "border-orange-500";
                               return "";
                             })()
                           }`}
                         />
+
 
                         {item.productId
                           ? (() => {
@@ -447,9 +452,10 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                         min="0"
                         step="0.01"
                         value={item.unitPrice}
-                        onChange={(e) =>
-                          updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)
-                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(index, "unitPrice", val === "" ? "" : Number(val));
+                        }}
                         className="w-24"
                       />
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -463,9 +469,10 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
                           min="0"
                           step="0.01"
                           value={item.taxRate * 100}
-                          onChange={(e) =>
-                            updateItem(index, 'taxRate', parseFloat(e.target.value) / 100 || 0)
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateItem(index, "taxRate", val === "" ? "" : Number(val) / 100);
+                          }}
                           className="pr-6"
                         />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">
