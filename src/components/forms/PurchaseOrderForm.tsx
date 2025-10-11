@@ -401,8 +401,11 @@ export default function PurchaseOrderForm({
                         type="number"
                         min={0}
                         step={1}
-                        value={item.quantity}
-                        onChange={(e) => updateItem(idx, "quantity", Number(e.target.value) || 0)}
+                        value={item.quantity === 0 ? "" : item.quantity}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(idx, "quantity", val === "" ? "" : Number(val));
+                        }}
                         className="w-20"
                       />
                     </TableCell>
@@ -412,8 +415,11 @@ export default function PurchaseOrderForm({
                         type="number"
                         min={0}
                         step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => updateItem(idx, "unitPrice", Number(e.target.value) || 0)}
+                        value={item.unitPrice === 0 ? "" : item.unitPrice}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateItem(idx, "unitPrice", val === "" ? "" : Number(val));
+                        }}
                         className="w-32"
                       />
                     </TableCell>
@@ -424,8 +430,11 @@ export default function PurchaseOrderForm({
                           type="number"
                           min={0}
                           step="0.01"
-                          value={item.taxRatePercent}
-                          onChange={(e) => updateItem(idx, "taxRatePercent", Number(e.target.value) || 0)}
+                          value={item.taxRatePercent === 0 ? "" : item.taxRatePercent}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            updateItem(idx, "taxRatePercent", val === "" ? "" : Number(val));
+                          }}
                           className="pr-8"
                         />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-500">%</span>
