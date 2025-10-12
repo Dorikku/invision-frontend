@@ -18,6 +18,7 @@ import type { SimpleSupplier } from "@/types";
 
 type Product = {
   id: number | string;
+  product_code?: string | null;
   name: string;
   description?: string | null;
   selling_price?: number;
@@ -167,13 +168,13 @@ export default function PurchaseOrderForm({
   const productOptions = products.map((p) => ({
     value: String(p.id),
     label: p.name,
-    description: `${p.description ?? ""}`,
+    description: `${p.product_code ?? ""}`,
   }));
 
   const supplierOptions = suppliers.map((s) => ({
     value: String(s.id),
     label: s.name,
-    description: s.contact_person ?? "",
+    description: s.supplier_code ?? "",
   }));
 
   // Add a new empty item

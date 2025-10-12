@@ -10,6 +10,7 @@
 
 export interface SalesPerson {
   id: string;
+  sales_person_code: string;
   name: string;
 }
 

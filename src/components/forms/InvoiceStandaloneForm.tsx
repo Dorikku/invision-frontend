@@ -105,7 +105,7 @@ export default function InvoiceStandaloneForm({
   const productOptions = products.map((p) => ({
     value: p.id,
     label: p.name,
-    description: `₱${p.selling_price.toFixed(2)} - ${p.description || ""}`,
+    description: p.product_code || "",
   }));
 
   const addItem = () => {
@@ -222,7 +222,7 @@ export default function InvoiceStandaloneForm({
             options={customers.map((c) => ({
               value: c.id,
               label: c.name,
-              description: c.contact_person || "",
+              description: c.customer_code || "",
             }))}
             value={formData.customerId}
             onValueChange={(val) => setFormData({ ...formData, customerId: val })}

@@ -124,7 +124,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
   const productOptions = products.map(product => ({
     value: String(product.id), // Ensure this is a string
     label: product.name,
-    description: `₱${product.selling_price.toFixed(2)} - On hand: ${product.stock_info.on_hand}, Available: ${product.stock_info.available}`,
+    description: `${product.product_code ?? ""}` // Include product code if available
   }));
 
   const addItem = () => {
@@ -283,7 +283,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
             options={customers.map(customer => ({
               value: customer.id,
               label: customer.name,
-              description: customer.contact_person || ''
+              description: customer.customer_code || ''
             }))}
             value={formData.customerId}
             onValueChange={(value) => setFormData({ ...formData, customerId: value })}
@@ -311,6 +311,7 @@ export default function QuotationForm({ quotation, onSave, onCancel }: Quotation
             options={salesPersons.map(salesPerson => ({
               value: salesPerson.id,
               label: salesPerson.name,
+              description: salesPerson.sales_person_code || ''
             }))}
             value={formData.salesPersonId}
             onValueChange={(value) => setFormData({ ...formData, salesPersonId: value })}

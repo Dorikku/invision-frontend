@@ -307,7 +307,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
             options={customers.map(customer => ({
               value: customer.id,
               label: customer.name,
-              description: customer.contact_person || ''
+              description: customer.customer_code || ''
             }))}
             value={formData.customerId}
             onValueChange={(value) => setFormData({ ...formData, customerId: value })}
@@ -335,6 +335,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
             options={salesPersons.map(salesPerson => ({
               value: salesPerson.id,
               label: salesPerson.name,
+              description: salesPerson.sales_person_code || ''
             }))}
             value={formData.salesPersonId}
             onValueChange={(value) => setFormData({ ...formData, salesPersonId: value })}

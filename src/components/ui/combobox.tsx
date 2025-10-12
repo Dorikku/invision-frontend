@@ -87,7 +87,8 @@ export function Combobox({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label}
+                  // Combine label + description for search
+                  value={`${option.label} ${option.description ?? ""}`}
                   onSelect={() => {
                     onValueChange(option.value === value ? "" : option.value);
                     setOpen(false);
@@ -100,6 +101,7 @@ export function Combobox({
                       value === option.value ? "opacity-100" : "opacity-0"
                     )}
                   />
+                  <p className="text-sm text-gray-500">{option.description}</p>
                 </CommandItem>
               ))}
             </CommandGroup>
