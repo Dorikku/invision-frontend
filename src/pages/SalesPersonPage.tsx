@@ -16,6 +16,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 interface SalesPerson {
   id: number;
+  sales_person_code: string;
   name: string;
   total_orders: number;
   total_spent: number;
@@ -182,7 +183,7 @@ const SalesPersonPage = () => {
         <ScrollArea className="w-1/3 bg-white border-r border-gray-200 flex flex-col rounded-lg">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-semibold text-gray-800">Salespersons</h1>
+              <h1 className="text-2xl font-semibold text-gray-800">Sales Agents</h1>
               <Button size="sm" variant="outline" className="gap-1" onClick={handleAdd}>
                 <Plus className="h-4 w-4" />
                 Add
@@ -192,7 +193,7 @@ const SalesPersonPage = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search salespersons"
+                  placeholder="Search sales agents"
                   className="pl-9 w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -218,6 +219,7 @@ const SalesPersonPage = () => {
                   <img src={sp.avatar} alt={sp.name} className="w-10 h-10 rounded-full mr-3" />
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900">{sp.name}</h3>
+                    <p className="text-sm text-gray-600">{sp.sales_person_code}</p>
                   </div>
                 </div>
               </div>
@@ -243,6 +245,7 @@ const SalesPersonPage = () => {
                         <h1 className="text-2xl font-semibold text-gray-900">
                           {selectedSalesPerson.name}
                         </h1>
+                        <p className="text-md text-gray-600">{selectedSalesPerson.sales_person_code}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
