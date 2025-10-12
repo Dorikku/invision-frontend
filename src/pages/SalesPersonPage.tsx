@@ -136,7 +136,7 @@ const SalesPersonPage = () => {
   }, [selectedSalesPerson]);
 
   const filtered = salesPersons.filter((s) =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.sales_person_code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAdd = () => {
