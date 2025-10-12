@@ -135,7 +135,8 @@ const SuppliersPage = () => {
   const filteredSuppliers = suppliers.filter(
     (s) =>
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+      (s.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      s.supplier_code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddSupplier = () => {
