@@ -194,6 +194,7 @@ export interface Payment {
 
 export interface SimpleCustomer {
   id: string;
+  customer_code: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -204,6 +205,7 @@ export interface SimpleCustomer {
 
 export interface Customer {
   id: string;
+  customer_code: string;
   name: string;
   email: string | null;
   phone: string | null;
@@ -220,6 +222,7 @@ export interface Customer {
 
 export type SimpleSupplier = {
   id: number;
+  supplier_code: string;
   name: string;
   contact_person?: string | null;
   email?: string | null;

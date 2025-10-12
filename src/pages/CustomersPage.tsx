@@ -150,7 +150,8 @@ const CustomersPage = () => {
   const filteredCustomers = customers.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+      (c.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      c.customer_code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAddCustomer = () => {
@@ -266,6 +267,7 @@ const CustomersPage = () => {
                         }`}
                       ></div>
                     </div>
+                    <p className="text-sm text-gray-600">{customer.customer_code}</p>
                     <p className="text-sm text-gray-600">{customer.email}</p>
                   </div>
                 </div>
@@ -292,6 +294,7 @@ const CustomersPage = () => {
                         <h1 className="text-2xl font-semibold text-gray-900">
                           {selectedCustomer.name}
                         </h1>
+                        <p className="text-gray-600">{selectedCustomer.customer_code}</p>
                         <p className="text-gray-600">{selectedCustomer.contact_person}</p>
                         <p className="text-gray-600">{selectedCustomer.email}</p>
                         <p className="text-gray-600">{selectedCustomer.phone}</p>
