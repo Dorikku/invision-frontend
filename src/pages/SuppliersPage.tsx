@@ -77,6 +77,8 @@ const getStatusVariant = (status: string) => {
   switch (status.toLowerCase()) {
     case "draft":
       return "secondary";
+    case "partial_received":
+      return "secondary";
     case "ordered":
       return "primary";
     case "received":
@@ -256,6 +258,7 @@ const SuppliersPage = () => {
                         }`}
                       ></div>
                     </div>
+                    <p className="text-sm text-gray-600">{supplier.supplier_code}</p>
                     <p className="text-sm text-gray-600">{supplier.email}</p>
                   </div>
                 </div>
@@ -280,6 +283,7 @@ const SuppliersPage = () => {
                       />
                       <div>
                         <h1 className="text-2xl font-semibold text-gray-900">{selectedSupplier.name}</h1>
+                        <p className="text-sm text-gray-600 mb-1">{selectedSupplier.supplier_code}</p>
                         <p className="text-gray-600">{selectedSupplier.contact_person}</p>
                         <p className="text-gray-600">{selectedSupplier.email}</p>
                         <p className="text-gray-600">{selectedSupplier.phone}</p>

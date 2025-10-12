@@ -235,12 +235,12 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
                 <div className="text-sm text-gray-600 whitespace-pre-line">{invoice.notes}</div>
               </div>
             )}
-            <div>
+            {/* <div>
               <h3 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-wider">Terms & Conditions:</h3>
               <div className="text-sm text-gray-600 whitespace-pre-line">
                 {invoice.terms || 'Payment is due within 30 days from the invoice date.\nLate payments may incur additional charges.\nPlease reference invoice number on all payments.'}
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Footer */}

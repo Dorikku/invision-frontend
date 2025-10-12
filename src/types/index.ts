@@ -230,6 +230,7 @@ export type SimpleSupplier = {
 
 export interface Supplier {
   id: number;
+  supplier_code: string;
   name: string;
   email?: string | null;
   phone?: string | null;
