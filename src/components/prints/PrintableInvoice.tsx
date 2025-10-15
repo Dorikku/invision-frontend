@@ -44,7 +44,7 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
 
     // Handle different item property names (description vs name)
     const getItemDescription = (item: any) => {
-      return item.description || item.name || 'Item';
+      return item.productName || item.description || 'Item';
     };
 
     const getItemQuantity = (item: any) => {

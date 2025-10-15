@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useLocation } from "react-router-dom";
 import PrintableInvoice from '../components/prints/PrintableInvoice';
 import { useReactToPrint } from 'react-to-print';
+import { set } from 'date-fns';
 
 
 
@@ -70,6 +71,12 @@ export default function SalesOrdersPage() {
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [salesOrderToPrint, setSalesOrderToPrint] = useState<SalesOrder | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const [shipmentOptions, setShipmentOptions] = useState<any[]>([]);
+  const [isSelectShipmentDialogOpen, setIsSelectShipmentDialogOpen] = useState(false);
+  const [selectedShipment, setSelectedShipment] = useState<any | null>(null);
+  const [selectedShipmentItems, setSelectedShipmentItems] = useState<any[]>([]);
+
+
 
   useEffect(() => {
     loadSalesOrders();
@@ -112,10 +119,26 @@ export default function SalesOrdersPage() {
     }
   };
 
-  const handlePrintDeliveryReceipt = (order: SalesOrder) => {
+
+const handlePrintDeliveryReceipt = async (order: SalesOrder) => {
+  try {
+    const response = await fetch(`${API_URL}/sales-orders/${order.id}/shipments`);
+    if (!response.ok) throw new Error("Failed to load shipments");
+    const data = await response.json();
+
+    if (!data || data.length === 0) {
+      toast.error("No shipments found for this sales order.");
+      return;
+    }
+
+    setShipmentOptions(data);
     setSalesOrderToPrint(order);
-    setIsPrintDialogOpen(true);
-  };
+    setIsSelectShipmentDialogOpen(true);
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load shipments");
+  }
+};
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -579,6 +602,69 @@ export default function SalesOrdersPage() {
           }}
         />
       )}
+
+      <Dialog open={isSelectShipmentDialogOpen} onOpenChange={setIsSelectShipmentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Shipment to Print</DialogTitle>
+            <DialogDescription>Choose which shipment’s delivery receipt to print.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            {shipmentOptions.map((s) => (
+              <div
+                key={s.id}
+                className={`p-3 border rounded cursor-pointer hover:bg-gray-100 ${
+                  selectedShipment?.id === s.id ? "border-blue-500 bg-blue-50" : ""
+                }`}
+                onClick={() => setSelectedShipment(s)}
+              >
+                <div className="font-medium">Shipment #{s.id}</div>
+                <div className="text-sm text-gray-600">
+                  Delivered: {new Date(s.dateDelivered).toLocaleDateString()}
+                </div>
+                {s.carrier && <div className="text-sm">Carrier: {s.carrier}</div>}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setIsSelectShipmentDialogOpen(false)}>Cancel</Button>
+            {/* <Button
+              disabled={!selectedShipment}
+              onClick={() => {
+                setIsSelectShipmentDialogOpen(false);
+                setSelectedShipmentItems(selectedShipment.items);
+                setIsPrintDialogOpen(true);
+              }}
+            >
+              Continue
+            </Button> */}
+            <Button
+              disabled={!selectedShipment}
+              onClick={async () => {
+                if (!selectedShipment) return;
+                try {
+                  // Fetch items for this shipment
+                  const res = await fetch(`${API_URL}/shipments/${selectedShipment.id}/items`);
+                  if (!res.ok) throw new Error("Failed to load shipment items");
+                  const data = await res.json();
+
+                  setSelectedShipmentItems(data.items); // ✅ use fetched items, not selectedShipment.items
+                  setIsSelectShipmentDialogOpen(false);
+                  setIsPrintDialogOpen(true);
+                } catch (error) {
+                  console.error(error);
+                  toast.error("Failed to load shipment items");
+                }
+              }}
+            >
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       
       <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -609,7 +695,7 @@ export default function SalesOrdersPage() {
                     invoiceNumber: salesOrderToPrint.orderNumber,
                     date: salesOrderToPrint.date,
                     dueDate: salesOrderToPrint.deliveryDate || salesOrderToPrint.date,
-                    items: salesOrderToPrint.items,
+                    items: selectedShipmentItems.length > 0 ? selectedShipmentItems : salesOrderToPrint.items,
                     total: salesOrderToPrint.total,
                     customerName: salesOrderToPrint.customerName,
                     customerAddress: salesOrderToPrint.customerAddress,
