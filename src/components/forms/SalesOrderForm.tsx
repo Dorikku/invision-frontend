@@ -152,7 +152,7 @@ export default function SalesOrderForm({ salesOrder, onSave, onCancel }: SalesOr
   const productOptions = products.map(product => ({
     value: product.id,
     label: product.name,
-    description: `₱${product.selling_price.toFixed(2)} - On hand: ${product.stock_info.on_hand}, Available: ${product.stock_info.available}`,
+    description: product.product_code,
   }));
 
   const addItem = () => {

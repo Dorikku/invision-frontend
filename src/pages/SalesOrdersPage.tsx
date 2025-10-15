@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, Eye, Edit, Copy, Trash2, Package, Truck, Receipt, Wallet, Search } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Eye, Edit, Copy, Trash2, Package, Truck, Receipt, Wallet, Search, Printer } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -15,6 +15,8 @@ import RecordPaymentDialog from '../components/forms/RecordPaymentDialog';
 import CreateShipmentDialog from '../components/forms/CreateShipmentDialog';
 import { Input } from '@/components/ui/input';
 import { useLocation } from "react-router-dom";
+import PrintableInvoice from '../components/prints/PrintableInvoice';
+import { useReactToPrint } from 'react-to-print';
 
 
 
@@ -64,6 +66,10 @@ export default function SalesOrdersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [salesOrderToDelete, setSalesOrderToDelete] = useState<SalesOrder | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  // Print Delivery Receipt
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const [salesOrderToPrint, setSalesOrderToPrint] = useState<SalesOrder | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadSalesOrders();
@@ -105,6 +111,21 @@ export default function SalesOrdersPage() {
       toast.error('Failed to refresh sales order');
     }
   };
+
+  const handlePrintDeliveryReceipt = (order: SalesOrder) => {
+    setSalesOrderToPrint(order);
+    setIsPrintDialogOpen(true);
+  };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `DeliveryReceipt-${salesOrderToPrint?.orderNumber || ''}`,
+    onAfterPrint: () => {
+      setIsPrintDialogOpen(false);
+      toast.success('Delivery receipt printed successfully');
+    },
+  });
+
 
   const handleCreateSalesOrder = () => {
     setEditingSalesOrder(null);
@@ -367,6 +388,13 @@ export default function SalesOrdersPage() {
             </DropdownMenuItem>
           )}
 
+          {["shipped", "partial"].includes(salesOrder.shipmentStatus) && (
+            <DropdownMenuItem onClick={() => handlePrintDeliveryReceipt(salesOrder)}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print Delivery Receipt
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuItem
             onClick={() => handleDeleteSalesOrder(salesOrder)}
             className="text-red-600"
@@ -551,6 +579,55 @@ export default function SalesOrdersPage() {
           }}
         />
       )}
+      
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Print Delivery Receipt</DialogTitle>
+            <DialogDescription>Preview before printing</DialogDescription>
+          </DialogHeader>
+
+          {salesOrderToPrint && (
+            <div>
+              <div className="mb-4 flex justify-end space-x-2 no-print">
+                <Button onClick={handlePrint}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print Receipt
+                </Button>
+                <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+
+              <div className="border rounded-lg">
+                <PrintableInvoice
+                  ref={printRef}
+                  title="DELIVERY RECEIPT"
+                  mode="delivery"
+                  invoice={{
+                    ...salesOrderToPrint,
+                    invoiceNumber: salesOrderToPrint.orderNumber,
+                    date: salesOrderToPrint.date,
+                    dueDate: salesOrderToPrint.deliveryDate || salesOrderToPrint.date,
+                    items: salesOrderToPrint.items,
+                    total: salesOrderToPrint.total,
+                    customerName: salesOrderToPrint.customerName,
+                    customerAddress: salesOrderToPrint.customerAddress,
+                  }}
+                  companyInfo={{
+                    name: 'PENTAMAX ELECTRICAL SUPPLY',
+                    address: 'Arty 1 Subd. Brgy. Talipapa Novaliches Quezon City',
+                    phone: '0916 453 8406',
+                    email: 'pentamaxelectrical@gmail.com',
+                    logo: '3.png',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -9,6 +9,10 @@ import CreateInvoiceDialog from '../forms/CreateInvoiceDialog';
 import CreateShipmentDialog from '../../components/forms/CreateShipmentDialog';
 import RecordPaymentDialog from '../../components/forms/RecordPaymentDialog';
 import { toast } from '../ui/sonner';
+import PrintableInvoice from '../prints/PrintableInvoice';
+import { useReactToPrint } from 'react-to-print';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+
 
 interface SalesOrderViewProps {
   salesOrder: SalesOrder;
@@ -26,6 +30,9 @@ export default function SalesOrderView({
   const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+  const [printData, setPrintData] = useState<any>(null);
 
   const getInvoiceStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -66,6 +73,20 @@ export default function SalesOrderView({
     }
   };
 
+  const handlePrintDeliveryReceipt = (order: SalesOrder) => {
+    setPrintData(order);
+    setIsPrintDialogOpen(true);
+  };
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `DeliveryReceipt-${salesOrder.orderNumber}`,
+    onAfterPrint: () => {
+      setIsPrintDialogOpen(false);
+      toast.success('Delivery receipt printed successfully');
+    },
+  });
+
   const formatStatusText = (status: string) => {
     return status
       .split('_')
@@ -73,9 +94,9 @@ export default function SalesOrderView({
       .join(' ');
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  // const handlePrint = () => {
+  //   window.print();
+  // };
 
   const handleSendEmail = () => {
     alert('Email functionality would be implemented here');
@@ -306,6 +327,13 @@ export default function SalesOrderView({
           </Button>
         )}
 
+        {['shipped', 'partial'].includes(salesOrder.shipmentStatus) && (
+          <Button onClick={() => handlePrintDeliveryReceipt(salesOrder)}>
+            <Printer className="mr-2 h-4 w-4" /> Print Delivery Receipt
+          </Button>
+        )}
+
+
         <Button variant="outline" onClick={onClose}>
           <CircleX className="mr-2 h-4 w-4" />
           Close
@@ -342,6 +370,55 @@ export default function SalesOrderView({
           onRefresh(Number(salesOrder.id));
         }}
       />
+
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Print Delivery Receipt</DialogTitle>
+            <DialogDescription>Preview before printing</DialogDescription>
+          </DialogHeader>
+
+          {printData && (
+            <div>
+              <div className="mb-4 flex justify-end space-x-2 no-print">
+                <Button onClick={handlePrint}>
+                  <Printer className="mr-2 h-4 w-4" /> Print Receipt
+                </Button>
+                <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+
+              <div className="border rounded-lg">
+                <PrintableInvoice
+                  ref={printRef}
+                  title="DELIVERY RECEIPT"
+                  mode="delivery"
+                  invoice={{
+                    ...printData,
+                    invoiceNumber: printData.orderNumber,
+                    date: printData.date,
+                    dueDate: printData.deliveryDate || printData.date,
+                    items: printData.items,
+                    total: printData.total,
+                    customerName: printData.customerName,
+                    customerAddress: printData.customerAddress,
+                  }}
+                  companyInfo={{
+                    name: 'PENTAMAX ELECTRICAL SUPPLY',
+                    address: 'Arty 1 Subd. Brgy. Talipapa Novaliches Quezon City',
+                    phone: '0916 453 8406',
+                    email: 'pentamaxelectrical@gmail.com',
+                    registrationNumber: '314-359-848-00000',
+                    logo: '3.png',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

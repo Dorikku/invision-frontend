@@ -19,6 +19,8 @@ import ReportsPage from './pages/ReportsPage';
 import NotFound from './pages/NotFound';
 import SalesPersonsPage from './pages/SalesPersonPage';
 import CategoriesPage from './pages/CategoriesPage';
+import PrintDeliveryReceiptPage from "@/pages/PrintDeliveryReceiptPage";
+
 
 const queryClient = new QueryClient();
 
@@ -66,6 +68,10 @@ const App = () => {
                     <Route path="/sales-persons" element={<SalesPersonsPage />} />
                     <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="*" element={<NotFound />} />
+                    <Route
+                      path="/print/delivery-receipt/:id"
+                      element={<PrintDeliveryReceiptPage />}
+                    />
                   </Routes>
                 </main>
               </ScrollArea>
