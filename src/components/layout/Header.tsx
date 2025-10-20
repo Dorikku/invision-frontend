@@ -1,18 +1,27 @@
-import { Bell, Search, User, Menu, X } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
+import { Bell, Search, User, Menu, X } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '../../components/ui/avatar';
-import { useState } from 'react';
+} from "../../components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "../../components/ui/avatar";
+import { useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { logout, user } = useAuth(); // 👈 get logout function and user info
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    logout(); // remove token and clear user
+    navigate("/login"); // redirect to login page
+  };
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -26,11 +35,7 @@ export default function Header() {
             className="md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
 
           {/* Desktop search */}
@@ -53,14 +58,14 @@ export default function Header() {
             <Search className="h-5 w-5" />
           </Button>
         </div>
-        
+
         {/* Right section */}
         <div className="flex items-center space-x-2 sm:space-x-4">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
           </Button>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2">
@@ -69,13 +74,15 @@ export default function Header() {
                     <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium hidden sm:inline">Admin User</span>
+                <span className="text-sm font-medium hidden sm:inline">
+                  {user?.role || "User"}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Sign out</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -93,29 +100,6 @@ export default function Header() {
               autoFocus
             />
           </div>
-        </div>
-      )}
-
-      {/* Mobile menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t bg-white">
-          <nav className="px-4 py-2 space-y-2">
-            <Button variant="ghost" className="w-full justify-start">
-              Dashboard
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Documents
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Customers
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Products
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              Analytics
-            </Button>
-          </nav>
         </div>
       )}
     </header>
