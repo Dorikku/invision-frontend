@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/axiosClient";
 import { useAuth } from "./AuthContext";
 
@@ -7,17 +8,25 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await API.post("/auth/login", { email, password });
       login(res.data.access_token);
-      window.location.href = "/";
+
+      if (res.data.must_change_password) {
+        // Force redirect to change password page
+        navigate("/change-password", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err: any) {
       setError("Invalid email or password");
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white font-sans px-4">

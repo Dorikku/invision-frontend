@@ -28,6 +28,8 @@ import ProtectedRoute from './auth/ProtectedRoute';
 import UnauthorizedPage from './pages/UnauthorizedPage'; // create this
 import Register from './pages/Register';
 import UsersPage from './pages/UsersPage';
+import ChangePasswordPage from "./auth/ChangePasswordPage";
+
 
 const queryClient = new QueryClient();
 
@@ -51,18 +53,20 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <AuthProvider>
-          <BrowserRouter basename="/invision-frontend/">
+          <BrowserRouter basename="/invision-frontend/"> 
             <Routes>
               {/* ---------- PUBLIC ROUTES ---------- */}
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/unauthorized" element={<UnauthorizedPage />} />
+              <Route path="/change-password" element={<ChangePasswordPage />} />
+
 
               {/* ---------- PROTECTED ROUTES ---------- */}
               <Route
                 path="/*"
                 element={
-                  <ProtectedRoute allowedRoles={['Admin', 'User']}>
+                  <ProtectedRoute allowedRoles={['Admin', 'Secretary', 'Sales']}>
                     <div className="flex h-screen bg-gray-50">
                       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
                       <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">
@@ -97,7 +101,7 @@ const App = () => {
               />
 
               {/* ---------- FALLBACK ---------- */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="*" element={<Navigate to="login" replace />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

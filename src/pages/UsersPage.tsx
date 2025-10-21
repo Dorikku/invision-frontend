@@ -1,15 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Search, Shield, Lock } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Lock, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
 import { toast } from "sonner";
+import UserForm from "@/components/forms/UserForm";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,6 +34,8 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [successDialog, setSuccessDialog] = useState(false);
+  const [newUserInfo, setNewUserInfo] = useState<any>(null);
 
   useEffect(() => {
     loadUsers();
@@ -43,21 +60,19 @@ export default function UsersPage() {
     setIsFormOpen(true);
   };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: any) => {
     setEditingUser(user);
     setIsFormOpen(true);
   };
 
-  const handleDeactivateUser = async (user) => {
+  const handleDeactivateUser = async (user: any) => {
     if (confirm(`Deactivate ${user.name}?`)) {
-      // implement API call to deactivate
       toast.success(`${user.name} has been deactivated`);
     }
   };
 
-  const handleResetPassword = async (user) => {
+  const handleResetPassword = async (user: any) => {
     if (confirm(`Send password reset email to ${user.email}?`)) {
-      // implement API call to send reset
       toast.success(`Password reset email sent to ${user.email}`);
     }
   };
@@ -68,14 +83,16 @@ export default function UsersPage() {
     {
       key: "role_name",
       label: "Role",
-      render: (value) => (
-        <Badge variant="outline" className="capitalize">{value}</Badge>
+      render: (value: string) => (
+        <Badge variant="outline" className="capitalize">
+          {value}
+        </Badge>
       ),
     },
     {
       key: "is_active",
       label: "Status",
-      render: (value) =>
+      render: (value: boolean) =>
         value ? (
           <Badge variant="success">Active</Badge>
         ) : (
@@ -84,10 +101,12 @@ export default function UsersPage() {
     },
   ];
 
-  const getActionItems = (user) => (
+  const getActionItems = (user: any) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm">•••</Button>
+        <Button variant="ghost" size="sm">
+          •••
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => handleEditUser(user)}>
@@ -116,7 +135,9 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground">Manage system accounts and roles</p>
+          <p className="text-muted-foreground">
+            Manage system accounts and roles
+          </p>
         </div>
         <Button onClick={handleAddUser}>
           <Plus className="mr-2 h-4 w-4" /> Add User
@@ -146,26 +167,67 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
+      {/* Add/Edit User Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {editingUser ? "Edit User" : "Add New User"}
-            </DialogTitle>
+            <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
+          </DialogHeader>
+
+          <UserForm
+            user={editingUser}
+            onSuccess={(createdUser) => {
+              setIsFormOpen(false);
+              if (createdUser) {
+                setNewUserInfo(createdUser);
+                setSuccessDialog(true);
+              }
+              loadUsers();
+            }}
+            onCancel={() => setIsFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* ✅ Success Dialog for new user */}
+      <Dialog open={successDialog} onOpenChange={setSuccessDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>User Created Successfully</DialogTitle>
             <DialogDescription>
-              {editingUser
-                ? "Update user details or role."
-                : "Create a new account for your staff."}
+              The user account has been created and an email has been sent.
             </DialogDescription>
           </DialogHeader>
-          {/* Replace below with your UserForm component */}
-          <div className="flex flex-col gap-3">
-            <Input placeholder="Full Name" />
-            <Input placeholder="Email" />
-            <Input placeholder="Role" />
-            <Input placeholder="Temporary Password" type="password" />
-            <Button className="mt-2">Save</Button>
+
+          {newUserInfo && (
+            <div className="space-y-3 mt-4">
+              <p>
+                <strong>Name:</strong> {newUserInfo.name}
+              </p>
+              <p>
+                <strong>Email:</strong> {newUserInfo.email}
+              </p>
+              <div className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-md">
+                <div>
+                  <strong>Temporary Password:</strong>{" "}
+                  <span className="font-mono">{newUserInfo.temporary_password}</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText(newUserInfo.temporary_password);
+                    toast.success("Password copied to clipboard");
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => setSuccessDialog(false)}>Close</Button>
           </div>
         </DialogContent>
       </Dialog>
