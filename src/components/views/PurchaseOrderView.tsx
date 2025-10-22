@@ -5,6 +5,8 @@ import { Separator } from '../../components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Edit, Printer, Mail, Package, CircleX } from 'lucide-react';
 import type { PurchaseOrder } from '../../types';
+import { useAuth } from "../../auth/AuthContext";
+
 
 interface PurchaseOrderViewProps {
   purchaseOrder: PurchaseOrder;
@@ -19,6 +21,10 @@ export default function PurchaseOrderView({
   onEdit,
   onReceive,
 }: PurchaseOrderViewProps) {
+  const { user } = useAuth(); // ✅ get current user
+  const isSales = user?.role === "Sales"; // ✅ check role
+
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'draft':
@@ -71,10 +77,11 @@ export default function PurchaseOrderView({
           <Button variant="outline" size="sm" onClick={handleSendEmail}>
             <Mail className="mr-2 h-4 w-4" /> Email
           </Button>
-          <Button variant="outline" size="sm" onClick={onEdit}>
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </Button>
-          
+          {!isSales && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="mr-2 h-4 w-4" /> Edit
+            </Button>
+          )}
         </div>
       </div>
 
@@ -207,9 +214,11 @@ export default function PurchaseOrderView({
 
       {/* Close Button */}
       <div className="flex justify-end gap-2">
-        <Button onClick={onReceive}>
-            <Package className="mr-2 h-4 w-4" /> Receive Items
-        </Button>
+        {!isSales && (
+          <Button onClick={onReceive}>
+              <Package className="mr-2 h-4 w-4" /> Receive Items
+          </Button>
+        )}
         <Button variant="outline" onClick={onClose}>
           <CircleX className="mr-2 h-4 w-4" />
           Close

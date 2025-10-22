@@ -30,6 +30,8 @@ import PurchaseOrderForm from "../components/forms/PurchaseOrderForm";
 import PurchaseOrderView from "../components/views/PurchaseOrderView";
 import type { PurchaseOrder } from "../types";
 import ReceiveItemDialog from "../components/forms/ReceiveItemDialog";
+import { useAuth } from "../auth/AuthContext";
+
 
 // API functions
 
@@ -73,6 +75,8 @@ export default function PurchaseOrdersPage() {
   const [selectedPO, setSelectedPO] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isReceiveOpen, setIsReceiveOpen] = useState(false);
+  const { user } = useAuth();
+  const isSales = user?.role === "Sales"; // 👈 detect Sales role
 
 
   useEffect(() => {
@@ -166,48 +170,73 @@ export default function PurchaseOrdersPage() {
     },
   ];
 
-  const getActionItems = (po: PurchaseOrder) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+  const getActionItems = (po: PurchaseOrder) => {
+    if (isSales) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+              </svg>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleViewPurchaseOrder(po)}>
+              <Eye className="mr-2 h-4 w-4" /> View
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={4}
-              d="M5 12h.01M12 12h.01M19 12h.01"
-            />
-          </svg>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleViewPurchaseOrder(po)}>
-          <Eye className="mr-2 h-4 w-4" /> View
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => { setSelectedPO(po); setShowForm(true); }}>
-          <Edit className="mr-2 h-4 w-4" /> Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => { setSelectedPO(po); setIsReceiveOpen(true); }}>
-          <Package className="mr-2 h-4 w-4" /> Receive Items
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleDeletePurchaseOrder(po)}
-          className="text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" /> Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={4}
+                d="M5 12h.01M12 12h.01M19 12h.01"
+              />
+            </svg>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleViewPurchaseOrder(po)}>
+            <Eye className="mr-2 h-4 w-4" /> View
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { setSelectedPO(po); setShowForm(true); }}>
+            <Edit className="mr-2 h-4 w-4" /> Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { setSelectedPO(po); setIsReceiveOpen(true); }}>
+            <Package className="mr-2 h-4 w-4" /> Receive Items
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleDeletePurchaseOrder(po)}
+            className="text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   if (loading) {
     return (
@@ -242,10 +271,12 @@ export default function PurchaseOrdersPage() {
             Manage your purchase orders and track receipts
           </p>
         </div>
-        <Button onClick={() => { setSelectedPO(null); setShowForm(true); }}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Purchase Order
-        </Button>
+        {!isSales && (
+          <Button onClick={() => { setSelectedPO(null); setShowForm(true); }}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Purchase Order
+          </Button>
+        )}
       </div>
 
       <Card>
