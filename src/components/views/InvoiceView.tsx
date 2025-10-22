@@ -11,6 +11,8 @@ import { Wallet } from 'lucide-react';
 import { toast } from '../ui/sonner';
 import { useReactToPrint } from "react-to-print";
 import PrintableInvoice from "../../components/prints/PrintableInvoice";
+import { useAuth } from "../../auth/AuthContext";
+
 
 interface InvoiceViewProps {
   invoice: Invoice;
@@ -22,6 +24,8 @@ interface InvoiceViewProps {
 export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: InvoiceViewProps) {
   const [isRecordPaymentOpen, setIsRecordPaymentOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth(); // ✅ get current user
+  const isSales = user?.role === "Sales"; // ✅ check role
 
 
   const getStatusBadgeVariant = (status: string) => {
@@ -55,20 +59,22 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
           <Badge variant={getStatusBadgeVariant(invoice.status)}>
             {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
           </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (invoice.status === "paid" || invoice.status == "partial") {
-                toast.error("Editing is not available for paid invoices.");
-                return;
-              }
-              onEdit();
-            }}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
+          {!isSales && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (invoice.status === "paid" || invoice.status == "partial") {
+                  toast.error("Editing is not available for paid invoices.");
+                  return;
+                }
+                onEdit();
+              }}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handlePrint}>
             <Download className="mr-2 h-4 w-4" />
             Print
@@ -210,7 +216,7 @@ export default function InvoiceView({ invoice, onClose, onEdit, onUpdated }: Inv
       )}
 
       <div className="flex justify-end space-x-2">
-        {['unpaid', 'partial', 'overdue'].includes(invoice.status) && (
+        {['unpaid', 'partial', 'overdue'].includes(invoice.status) && !isSales && (
           <Button onClick={() => setIsRecordPaymentOpen(true)}>
             <Wallet className="mr-2 h-4 w-4" /> Record Payment
           </Button>

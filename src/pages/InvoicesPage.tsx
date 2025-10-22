@@ -13,6 +13,8 @@ import InvoiceView from '../components/views/InvoiceView';
 import PrintableInvoice from '../components/prints/PrintableInvoice'; // Add this import
 import { useReactToPrint } from 'react-to-print'; // Install: npm install react-to-print
 import { Input } from '@/components/ui/input';
+import { useAuth } from "../auth/AuthContext";
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -51,6 +53,8 @@ export default function InvoicesPage() {
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const [invoiceToPrint, setInvoiceToPrint] = useState<Invoice | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth(); // 👈 Get logged-in user
+  const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
 
   // Company information - you can move this to a config file or fetch from API
   const companyInfo = {
@@ -202,6 +206,34 @@ export default function InvoicesPage() {
       handleEditInvoice(inv);
     };
 
+    if (isSales) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+              </svg>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleViewInvoice(invoice)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlePrintInvoice(invoice)}>
+              <FileText className="mr-2 h-4 w-4" />
+              Print
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -261,10 +293,12 @@ export default function InvoicesPage() {
             Manage your invoices and billing
           </p>
         </div>
-        <Button onClick={handleCreateInvoice}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Invoice
-        </Button>
+        {!isSales && (
+          <Button onClick={handleCreateInvoice}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Invoice
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
