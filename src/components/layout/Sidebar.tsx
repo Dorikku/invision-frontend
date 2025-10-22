@@ -9,10 +9,13 @@ import {
   Home,
   Settings,
   Menu,
-  X
+  X,
+  UserCog
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import invisionLogo from "@/assets/invision_logo2.png";
+import { useAuth } from "@/auth/AuthContext";
+
 
 type MenuItem = {
   name: string;
@@ -50,6 +53,7 @@ const menuItems: MenuItem[] = [
   { name: "Customers", id: "customers", href: "/customers", icon: Users },
   { name: "Suppliers", id: "suppliers", href: "/suppliers", icon: Truck },
   { name: "Sales Persons", id: "sales_persons", href: "/sales-persons", icon: Users },
+  { name: "User Management", id: "user_management", href: "/users", icon: UserCog },
   { name: "Reports", id: "reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", id: "settings", href: "/settings", icon: Settings }
 ];
@@ -62,6 +66,8 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const location = useLocation();
+  const { user } = useAuth();
+
 
   const toggleSubmenu = (id: string) => {
     setExpandedMenus((prev) => ({
@@ -120,91 +126,100 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Navigation */}
         <nav className="mt-2">
           <ul>
-            {menuItems.map((item) => {
-              const isSubItemActive =
-                item.subItems?.some((sub) => sub.href === location.pathname) || false;
+            {menuItems
+              .filter((item) => {
+                // ✅ Only Admins can see User Management
+                if (item.id === "user_management" && user?.role !== "Admin") {
+                  return false;
+                }
+                return true;
+              })
+              .map((item) => {
+                const isSubItemActive =
+                  item.subItems?.some((sub) => sub.href === location.pathname) || false;
 
-              return (
-                <li key={item.id}>
-                  {item.hasSubmenu ? (
-                    <>
-                      <button
-                        onClick={() => toggleSubmenu(item.id)}
-                        className={cn(
-                          "w-full text-left flex items-center justify-between py-3 px-6 transition-colors rounded-[var(--radius)]",
-                          isSubItemActive
-                            ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-r-4 border-[hsl(var(--primary))]"
-                            : "text-gray-600 hover:bg-[hsl(var(--muted))]"
-                        )}
-                      >
-                        <div className="flex items-center">
-                          <item.icon className="h-5 w-5 mr-3" />
-                          {item.name}
-                        </div>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
+                return (
+                  <li key={item.id}>
+                    {item.hasSubmenu ? (
+                      <>
+                        <button
+                          onClick={() => toggleSubmenu(item.id)}
                           className={cn(
-                            "h-4 w-4 transition-transform",
-                            expandedMenus[item.id] ? "rotate-180" : ""
+                            "w-full text-left flex items-center justify-between py-3 px-6 transition-colors rounded-[var(--radius)]",
+                            isSubItemActive
+                              ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-r-4 border-[hsl(var(--primary))]"
+                              : "text-gray-600 hover:bg-[hsl(var(--muted))]"
                           )}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </button>
+                          <div className="flex items-center">
+                            <item.icon className="h-5 w-5 mr-3" />
+                            {item.name}
+                          </div>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={cn(
+                              "h-4 w-4 transition-transform",
+                              expandedMenus[item.id] ? "rotate-180" : ""
+                            )}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
 
-                      {expandedMenus[item.id] && (
-                        <ul className="pl-4 py-1 bg-[hsl(var(--muted))]">
-                          {item.subItems?.map((sub) => (
-                            <li key={sub.id}>
-                              <NavLink
-                                to={sub.href}
-                                onClick={handleLinkClick}
-                                className={({ isActive }) =>
-                                  cn(
-                                    "block w-full text-left py-2 px-8 text-sm transition-colors",
-                                    isActive
-                                      ? "text-[hsl(var(--primary))] font-medium"
-                                      : "text-gray-600 hover:text-[hsl(var(--primary))]"
-                                  )
-                                }
-                              >
-                                {sub.name}
-                              </NavLink>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </>
-                  ) : (
-                    <NavLink
-                      to={item.href || "#"}
-                      onClick={handleLinkClick}
-                      className={({ isActive }) =>
-                        cn(
-                          "w-full text-left flex items-center py-3 px-6 transition-colors rounded-[var(--radius)]",
-                          isActive
-                            ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-r-4 border-[hsl(var(--primary))]"
-                            : "text-gray-600 hover:bg-[hsl(var(--muted))]"
-                        )
-                      }
-                    >
-                      <item.icon className="h-5 w-5 mr-3" />
-                      {item.name}
-                    </NavLink>
-                  )}
-                </li>
-              );
-            })}
+                        {expandedMenus[item.id] && (
+                          <ul className="pl-4 py-1 bg-[hsl(var(--muted))]">
+                            {item.subItems?.map((sub) => (
+                              <li key={sub.id}>
+                                <NavLink
+                                  to={sub.href}
+                                  onClick={handleLinkClick}
+                                  className={({ isActive }) =>
+                                    cn(
+                                      "block w-full text-left py-2 px-8 text-sm transition-colors",
+                                      isActive
+                                        ? "text-[hsl(var(--primary))] font-medium"
+                                        : "text-gray-600 hover:text-[hsl(var(--primary))]"
+                                    )
+                                  }
+                                >
+                                  {sub.name}
+                                </NavLink>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    ) : (
+                      <NavLink
+                        to={item.href || "#"}
+                        onClick={handleLinkClick}
+                        className={({ isActive }) =>
+                          cn(
+                            "w-full text-left flex items-center py-3 px-6 transition-colors rounded-[var(--radius)]",
+                            isActive
+                              ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-r-4 border-[hsl(var(--primary))]"
+                              : "text-gray-600 hover:bg-[hsl(var(--muted))]"
+                          )
+                        }
+                      >
+                        <item.icon className="h-5 w-5 mr-3" />
+                        {item.name}
+                      </NavLink>
+                    )}
+                  </li>
+                );
+              })}
           </ul>
         </nav>
+
       </aside>
     </>
   );

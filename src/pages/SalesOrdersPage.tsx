@@ -18,6 +18,8 @@ import { useLocation } from "react-router-dom";
 import PrintableInvoice from '../components/prints/PrintableInvoice';
 import { useReactToPrint } from 'react-to-print';
 import { set } from 'date-fns';
+import { useAuth } from "../auth/AuthContext";
+
 
 
 
@@ -75,6 +77,8 @@ export default function SalesOrdersPage() {
   const [isSelectShipmentDialogOpen, setIsSelectShipmentDialogOpen] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState<any | null>(null);
   const [selectedShipmentItems, setSelectedShipmentItems] = useState<any[]>([]);
+  const { user } = useAuth(); // 👈 Get logged-in user
+  const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
 
 
 
@@ -346,6 +350,37 @@ const handlePrintDeliveryReceipt = async (order: SalesOrder) => {
   ];
 
   const getActionItems = (salesOrder: SalesOrder) => {
+    if (isSales) {
+      // 👇 Sales role: View and Print only
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+              </svg>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleViewSalesOrder(salesOrder)}>
+              <Eye className="mr-2 h-4 w-4" />
+              View
+            </DropdownMenuItem>
+            {["shipped", "partial"].includes(salesOrder.shipmentStatus) && (
+              <DropdownMenuItem onClick={() => handlePrintDeliveryReceipt(salesOrder)}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print Delivery Receipt
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+    
     const editDisabled =
       ["partial", "invoiced"].includes(salesOrder.invoiceStatus) ||
       ["partial", "paid"].includes(salesOrder.paymentStatus) ||
@@ -461,10 +496,12 @@ const handlePrintDeliveryReceipt = async (order: SalesOrder) => {
             Manage your sales orders and track fulfillment
           </p>
         </div>
-        <Button onClick={handleCreateSalesOrder}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Sales Order
-        </Button>
+        {!isSales && (
+          <Button onClick={handleCreateSalesOrder}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Sales Order
+          </Button>
+        )}
       </div>
 
       <Card>

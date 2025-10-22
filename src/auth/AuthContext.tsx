@@ -17,13 +17,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Check if token expired
+  const isTokenExpired = (decoded: DecodedToken) => {
+    if (!decoded.exp) return true;
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
+  };
+
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (storedToken) {
       try {
         const decoded: DecodedToken = jwtDecode(storedToken);
-        setUser(decoded);
-        setToken(storedToken);
+        if (isTokenExpired(decoded)) {
+          localStorage.removeItem("token");
+        } else {
+          setUser(decoded);
+          setToken(storedToken);
+          // Auto logout when token expires
+          const timeout = (decoded.exp * 1000) - Date.now();
+          setTimeout(() => logout(), timeout);
+        }
       } catch {
         localStorage.removeItem("token");
       }
@@ -36,6 +50,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const decoded: DecodedToken = jwtDecode(newToken);
     setUser(decoded);
     setToken(newToken);
+
+    // Auto logout after expiration
+    if (decoded.exp) {
+      const timeout = (decoded.exp * 1000) - Date.now();
+      setTimeout(() => logout(), timeout);
+    }
   };
 
   const logout = () => {
@@ -44,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
   };
 
-  if (loading) return <div>Loading...</div>; // 👈 wait before rendering routes
+  if (loading) return <div>Loading...</div>;
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
@@ -52,7 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
-
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

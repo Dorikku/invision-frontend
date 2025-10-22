@@ -1,4 +1,4 @@
-import { Bell, Search, User, Menu, X } from "lucide-react";
+import { Bell, Search, User, Menu, X, Settings, LogOut } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import {
@@ -15,12 +15,12 @@ import { useNavigate } from "react-router-dom";
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, user } = useAuth(); // 👈 get logout function and user info
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = () => {
-    logout(); // remove token and clear user
-    navigate("/login"); // redirect to login page
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -39,14 +39,14 @@ export default function Header() {
           </Button>
 
           {/* Desktop search */}
-          <div className="relative hidden md:block">
+          {/* <div className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="search"
               placeholder="Search documents, customers, products..."
               className="pl-10 w-64 lg:w-96"
             />
-          </div>
+          </div> */}
 
           {/* Mobile search toggle */}
           <Button
@@ -80,9 +80,18 @@ export default function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
+              <DropdownMenuItem>
+                <User className="h-4 w-4 mr-2 text-gray-500" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="h-4 w-4 mr-2 text-gray-500" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2 text-gray-500" />
+                Sign out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

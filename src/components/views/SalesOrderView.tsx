@@ -12,6 +12,7 @@ import { toast } from '../ui/sonner';
 import PrintableInvoice from '../prints/PrintableInvoice';
 import { useReactToPrint } from 'react-to-print';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
+import { useAuth } from "../../auth/AuthContext";
 
 
 interface SalesOrderViewProps {
@@ -33,6 +34,8 @@ export default function SalesOrderView({
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
   const [printData, setPrintData] = useState<any>(null);
+  const { user } = useAuth(); // ✅ get current user
+  const isSales = user?.role === "Sales"; // ✅ check role
 
   const getInvoiceStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -133,24 +136,27 @@ export default function SalesOrderView({
             <Mail className="mr-2 h-4 w-4" />
             Send Email
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (
-                ["partial", "invoiced"].includes(salesOrder.invoiceStatus) ||
-                ["partial", "paid"].includes(salesOrder.paymentStatus) ||
-                ["partial", "shipped"].includes(salesOrder.shipmentStatus)
-              ) {
-                toast.error("Editing is not available once the order is invoiced, paid, or shipped.");
-                return;
-              }
-              onEdit();
-            }}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
+          {/* ❌ Hide Edit if Sales role */}
+          {!isSales && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (
+                  ["partial", "invoiced"].includes(salesOrder.invoiceStatus) ||
+                  ["partial", "paid"].includes(salesOrder.paymentStatus) ||
+                  ["partial", "shipped"].includes(salesOrder.shipmentStatus)
+                ) {
+                  toast.error("Editing is not available once the order is invoiced, paid, or shipped.");
+                  return;
+                }
+                onEdit();
+              }}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
         </div>
       </div>
 
@@ -308,23 +314,28 @@ export default function SalesOrderView({
 
       {/* Action buttons */}
       <div className="flex justify-end gap-2">
-        {['not_invoiced', 'partial'].includes(salesOrder.invoiceStatus) && (
-          <Button onClick={handleCreateInvoice}>
-            <Receipt className="mr-2 h-4 w-4" /> Create Invoice
-          </Button>
-        )}
-
-        {['invoiced', 'partial'].includes(salesOrder.invoiceStatus) &&
-          salesOrder.paymentStatus !== 'paid' && (
-            <Button onClick={handleRecordPayment}>
-              <Wallet className="mr-2 h-4 w-4" /> Record Payment
+        {/* ❌ Hide Edit if Sales role */}
+        {!isSales && (
+          <>
+          {['not_invoiced', 'partial'].includes(salesOrder.invoiceStatus) && (
+            <Button onClick={handleCreateInvoice}>
+              <Receipt className="mr-2 h-4 w-4" /> Create Invoice
             </Button>
           )}
 
-        {salesOrder.shipmentStatus !== 'shipped' && (
-          <Button onClick={handleCreateShipment}>
-            <Truck className="mr-2 h-4 w-4" /> Create Shipment
-          </Button>
+          {['invoiced', 'partial'].includes(salesOrder.invoiceStatus) &&
+            salesOrder.paymentStatus !== 'paid' && (
+              <Button onClick={handleRecordPayment}>
+                <Wallet className="mr-2 h-4 w-4" /> Record Payment
+              </Button>
+            )}
+
+          {salesOrder.shipmentStatus !== 'shipped' && (
+            <Button onClick={handleCreateShipment}>
+              <Truck className="mr-2 h-4 w-4" /> Create Shipment
+            </Button>
+          )}
+          </>
         )}
 
         {['shipped', 'partial'].includes(salesOrder.shipmentStatus) && (

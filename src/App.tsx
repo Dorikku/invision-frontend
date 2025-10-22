@@ -88,7 +88,17 @@ const App = () => {
                               <Route path="/categories" element={<CategoriesPage />} />
                               <Route path="/print/delivery-receipt/:id" element={<PrintDeliveryReceiptPage />} />
                               <Route path="/unauthorized" element={<UnauthorizedPage />} />
-                              <Route path="/users" element={<UsersPage />} />
+
+                              {/* ✅ Admin-only route */}
+                              <Route
+                                path="/users"
+                                element={
+                                  <ProtectedRoute allowedRoles={['Admin']}>
+                                    <UsersPage />
+                                  </ProtectedRoute>
+                                }
+                              />
+
                               {/* ---------- 404 NOT FOUND ---------- */}
                               <Route path="*" element={<NotFound />} />
                             </Routes>
