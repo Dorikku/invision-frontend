@@ -11,6 +11,7 @@ import type { Quotation } from '../types';
 import QuotationForm from '../components/forms/QuotationForm';
 import { Input } from '@/components/ui/input';
 import QuotationView from '@/components/views/QuotationView';
+import { useAuth } from "../auth/AuthContext";
 
 // -----------------
 // API functions
@@ -92,6 +93,8 @@ export default function QuotationsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [quotationToDelete, setQuotationToDelete] = useState<Quotation | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuth(); // 👈 Get logged-in user
+  const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
 
   useEffect(() => {
     loadQuotations();
@@ -268,44 +271,65 @@ export default function QuotationsPage() {
     },
   ];
 
-  const getActionItems = (q: Quotation) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
-          </svg>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setSelectedQuotation(q)}>
-          <Eye className="mr-2 h-4 w-4" /> View
-        </DropdownMenuItem>
-        {/* ✏️ Only allow edit if status is "open" */}
-        {q.status === "open" && (
-          <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
-            <Edit className="mr-2 h-4 w-4" /> Edit
+  const getActionItems = (q: Quotation) => {
+    if (isSales) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+              </svg>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSelectedQuotation(q)}>
+              <Eye className="mr-2 h-4 w-4" /> View
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>        
+      )
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
+            </svg>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSelectedQuotation(q)}>
+            <Eye className="mr-2 h-4 w-4" /> View
           </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={() => handleDuplicateQuotation(q)}>
-          <Copy className="mr-2 h-4 w-4" /> Duplicate
-        </DropdownMenuItem>
-        {q.status === "open" && (
-          <>
-            <DropdownMenuItem onClick={() => handleAcceptQuotation(q)}>
-              <CheckCircle className="mr-2 h-4 w-4" /> Accept
+          {/* ✏️ Only allow edit if status is "open" */}
+          {q.status === "open" && (
+            <DropdownMenuItem onClick={() => handleEditQuotation(q)}>
+              <Edit className="mr-2 h-4 w-4" /> Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleRejectQuotation(q)}>
-              <XCircle className="mr-2 h-4 w-4" /> Reject
-            </DropdownMenuItem>
-          </>
-        )}
-        <DropdownMenuItem onClick={() => handleDeleteQuotation(q)} className="text-red-600">
-          <Trash2 className="mr-2 h-4 w-4" /> Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+          )}
+          <DropdownMenuItem onClick={() => handleDuplicateQuotation(q)}>
+            <Copy className="mr-2 h-4 w-4" /> Duplicate
+          </DropdownMenuItem>
+          {q.status === "open" && (
+            <>
+              <DropdownMenuItem onClick={() => handleAcceptQuotation(q)}>
+                <CheckCircle className="mr-2 h-4 w-4" /> Accept
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleRejectQuotation(q)}>
+                <XCircle className="mr-2 h-4 w-4" /> Reject
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuItem onClick={() => handleDeleteQuotation(q)} className="text-red-600">
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   // -----------------
   // Render
@@ -327,9 +351,11 @@ export default function QuotationsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Quotations</h1>
           <p className="text-muted-foreground">Manage your quotations</p>
         </div>
-        <Button onClick={handleCreateQuotation}>
-          <Plus className="mr-2 h-4 w-4" /> New Quotation
-        </Button>
+        {!isSales && (
+          <Button onClick={handleCreateQuotation}>
+            <Plus className="mr-2 h-4 w-4" /> New Quotation
+          </Button>
+        )}
       </div>
 
       <Card>

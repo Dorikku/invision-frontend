@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Separator } from '../../components/ui/separator';
 import { Edit, Download, Send, XCircle, CheckCircle } from 'lucide-react';
 import type { Quotation } from '../../types';
+import { useAuth } from "../../auth/AuthContext";
+
 
 interface QuotationViewProps {
   quotation: Quotation;
@@ -15,6 +17,9 @@ interface QuotationViewProps {
 }
 
 export default function QuotationView({ quotation, onClose, onEdit, onAccept, onReject }: QuotationViewProps) {
+  const { user } = useAuth(); // ✅ get current user
+  const isSales = user?.role === "Sales"; // ✅ check role
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'open': return 'primary';
@@ -43,7 +48,7 @@ export default function QuotationView({ quotation, onClose, onEdit, onAccept, on
             {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
           </Badge>
           {/* ✏️ Edit only if quotation is open */}
-          {quotation.status === "open" && (
+          {quotation.status === "open" && !isSales && (
             <Button variant="outline" size="sm" onClick={onEdit}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
@@ -179,7 +184,7 @@ export default function QuotationView({ quotation, onClose, onEdit, onAccept, on
       )}
 
       <div className="flex justify-end space-x-2">
-        {quotation.status === "open" && (
+        {quotation.status === "open" && !isSales && (
           <>
             <Button onClick={() => onAccept?.(quotation)}>
               <CheckCircle className="mr-2 h-4 w-4" /> Accept
