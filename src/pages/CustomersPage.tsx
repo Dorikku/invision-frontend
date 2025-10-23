@@ -10,6 +10,7 @@ import type { Customer, ActiveOrder, OrderHistoryItem } from "@/types";
 import CustomerForm from "@/components/forms/CustomerForm";
 import { toast } from "@/components/ui/sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useAuth } from "../auth/AuthContext";
 
 // ---------------- API Calls ----------------
 const API_URL = import.meta.env.VITE_API_URL;
@@ -115,6 +116,8 @@ const CustomersPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { user } = useAuth(); // 👈 Get logged-in user
+  const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -201,10 +204,12 @@ const CustomersPage = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-semibold text-gray-800">Customers</h1>
-              <Button size="sm" variant="outline" className="gap-1" onClick={handleAddCustomer}>
-                <Plus className="h-4 w-4" />
-                Add Customer
-              </Button>
+              {!isSales && (
+                <Button size="sm" variant="outline" className="gap-1" onClick={handleAddCustomer}>
+                  <Plus className="h-4 w-4" />
+                  Add Customer
+                </Button>
+              )}
             </div>
             <div className="flex items-center justify-between mb-4">
               <div className="relative flex-1 max-w-md">
@@ -216,9 +221,9 @@ const CustomersPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="ghost" size="sm" className="ml-2 text-gray-400">
+              {/* <Button variant="ghost" size="sm" className="ml-2 text-gray-400">
                 <Filter className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
 
             {/* Filter Legend */}
@@ -307,14 +312,18 @@ const CustomersPage = () => {
                       >
                         {derivedCustomerStatus(selectedCustomer)}
                       </Badge>
-                      <Button variant="outline" size="sm" onClick={() => handleEditCustomer(selectedCustomer)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-                        <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-                        Delete
-                      </Button>
+                      {!isSales && (
+                        <>
+                        <Button variant="outline" size="sm" onClick={() => handleEditCustomer(selectedCustomer)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                          <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                          Delete
+                        </Button>
+                        </>
+                      )}
                     </div>
                   </div>
 

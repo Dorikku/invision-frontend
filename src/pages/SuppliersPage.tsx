@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner";
 import SupplierForm from "@/components/forms/SupplierForm";
 import type { Supplier, ActivePurchaseOrder, PurchaseOrderHistoryItem } from "@/types";
+import { useAuth } from "../auth/AuthContext";
+
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -100,6 +102,8 @@ const SuppliersPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { user } = useAuth(); // 👈 Get logged-in user
+  const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
 
   useEffect(() => {
     const loadSuppliers = async () => {
@@ -188,10 +192,12 @@ const SuppliersPage = () => {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-semibold text-gray-800">Suppliers</h1>
-              <Button size="sm" variant="outline" className="gap-1" onClick={handleAddSupplier}>
-                <Plus className="h-4 w-4" />
-                Add Supplier
-              </Button>
+              {!isSales && (
+                <Button size="sm" variant="outline" className="gap-1" onClick={handleAddSupplier}>
+                  <Plus className="h-4 w-4" />
+                  Add Supplier
+                </Button>
+              )}
             </div>
             <div className="flex items-center justify-between mb-4">
               <div className="relative flex-1 max-w-md">
@@ -203,9 +209,9 @@ const SuppliersPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="ghost" size="sm" className="ml-2 text-gray-400">
+              {/* <Button variant="ghost" size="sm" className="ml-2 text-gray-400">
                 <Filter className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
             {/* Filter Legend */}
             <div className="flex items-center mt-3 text-sm">
@@ -294,14 +300,18 @@ const SuppliersPage = () => {
                       <Badge className="px-3 py-1 text-xs" variant={getSupplierStatusVariant(selectedSupplier.status)}>
                         {derivedSupplierStatus(selectedSupplier.status)}
                       </Badge>
-                      <Button variant="outline" size="sm" onClick={() => handleEditSupplier(selectedSupplier)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-                        <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-                        Delete
-                      </Button>
+                      {!isSales && (
+                        <>
+                        <Button variant="outline" size="sm" onClick={() => handleEditSupplier(selectedSupplier)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                          <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+                          Delete
+                        </Button>
+                        </>
+                      )}
                     </div>
                   </div>
 
