@@ -21,6 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import CategoryForm from "../components/forms/CategoryForm";
+import { useAuth } from "../auth/AuthContext";
+
 
 interface Category extends Record<string, unknown> {
   id: number;
@@ -50,6 +52,8 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const { user } = useAuth(); // ✅ get current user
+  const isSales = user?.role === "Sales"; // ✅ check role
 
   useEffect(() => {
     loadCategories();
@@ -163,10 +167,12 @@ export default function CategoriesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
           <p className="text-muted-foreground">Manage your product categories</p>
         </div>
-        <Button onClick={handleCreateCategory}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Category
-        </Button>
+        {!isSales && ( 
+          <Button onClick={handleCreateCategory}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Category
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -185,11 +191,22 @@ export default function CategoriesPage() {
           </div>
           <DataTable
             data={categories}
-            columns={columns}
+            columns={
+              isSales
+                ? columns // hide "Actions" for Sales users
+                : [
+                    ...columns,
+                    {
+                      key: "actions",
+                      label: "Actions",
+                      render: (_: any, cat: Category) => getActionItems(cat),
+                    },
+                  ]
+            }
             searchTerm={searchTerm}
-            onRowClick={handleEditCategory}
-            actions={getActionItems}
+            // onRowClick={isSales ? undefined : handleEditCategory} // disable click for Sales
           />
+
         </CardContent>
       </Card>
 
