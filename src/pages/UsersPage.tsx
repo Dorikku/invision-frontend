@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -36,6 +37,11 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState(null);
   const [successDialog, setSuccessDialog] = useState(false);
   const [newUserInfo, setNewUserInfo] = useState<any>(null);
+  // --- Password reset modal state ---
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetTempPassword, setResetTempPassword] = useState("");
+  const [resetUserName, setResetUserName] = useState("");
+
 
   useEffect(() => {
     loadUsers();
@@ -65,17 +71,99 @@ export default function UsersPage() {
     setIsFormOpen(true);
   };
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token"); // adapt to how you store auth
+    return token ? { "Authorization": `Bearer ${token}` } : {};
+  };
+
+  const handleActivateUser = async (user: any) => {
+    if (!confirm(`Activate ${user.name}?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/users/${user.id}/activate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to activate user");
+      }
+
+      toast.success(`${user.name} has been activated`);
+
+      // ✅ Update UI immediately
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, is_active: true } : u
+        )
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Error activating user");
+    }
+  };
+
+
   const handleDeactivateUser = async (user: any) => {
-    if (confirm(`Deactivate ${user.name}?`)) {
+    if (!confirm(`Deactivate ${user.name}?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/users/${user.id}/deactivate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to deactivate user");
+      }
+
       toast.success(`${user.name} has been deactivated`);
+      // Refresh list to show updated status
+      loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Error deactivating user");
     }
   };
 
   const handleResetPassword = async (user: any) => {
-    if (confirm(`Send password reset email to ${user.email}?`)) {
-      toast.success(`Password reset email sent to ${user.email}`);
+    if (!confirm(`Send password reset to ${user.email}?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/users/${user.id}/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to reset password");
+      }
+
+      const data = await res.json();
+
+      if (data.temporary_password) {
+        // Store temp password and show modal
+        setResetUserName(user.name);
+        setResetTempPassword(data.temporary_password);
+        setResetModalOpen(true);
+      } else {
+        toast.success(`Password reset email sent to ${user.email}`);
+      }
+
+      loadUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Error resetting password");
     }
   };
+
+
 
   const columns = [
     { key: "name", label: "Full Name", sortable: true },
@@ -96,7 +184,7 @@ export default function UsersPage() {
         value ? (
           <Badge variant="success">Active</Badge>
         ) : (
-          <Badge variant="secondary">Inactive</Badge>
+          <Badge variant="destructive">Inactive</Badge>
         ),
     },
   ];
@@ -115,9 +203,15 @@ export default function UsersPage() {
         <DropdownMenuItem onClick={() => handleResetPassword(user)}>
           <Lock className="w-4 h-4 mr-2" /> Reset Password
         </DropdownMenuItem>
+      {user.is_active ? (
         <DropdownMenuItem onClick={() => handleDeactivateUser(user)}>
           <Trash2 className="w-4 h-4 mr-2 text-red-500" /> Deactivate
         </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem onClick={() => handleActivateUser(user)}>
+          <Plus className="w-4 h-4 mr-2 text-green-600" /> Activate
+        </DropdownMenuItem>
+      )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -231,6 +325,40 @@ export default function UsersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Password Reset for {resetUserName}</DialogTitle>
+            <DialogDescription>
+              A temporary password has been generated. Please copy it and share securely with the user.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex items-center gap-2">
+            <Input
+              value={resetTempPassword}
+              readOnly
+              className="font-mono text-sm"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(resetTempPassword);
+                toast.success("Copied to clipboard");
+              }}
+            >
+              Copy
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setResetModalOpen(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
