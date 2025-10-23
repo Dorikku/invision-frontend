@@ -132,10 +132,10 @@ export default function SalesOrderView({
             <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSendEmail}>
+          {/* <Button variant="outline" size="sm" onClick={handleSendEmail}>
             <Mail className="mr-2 h-4 w-4" />
             Send Email
-          </Button>
+          </Button> */}
           {/* ❌ Hide Edit if Sales role */}
           {!isSales && (
             <Button
