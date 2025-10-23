@@ -118,6 +118,7 @@ const CustomersPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { user } = useAuth(); // 👈 Get logged-in user
   const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCustomers = async () => {
@@ -427,46 +428,80 @@ const CustomersPage = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Item</th>
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Quantity</th>
-                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Unit Price</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Order #</th>
+                          <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Date</th>
                           <th className="px-2 py-2 text-left text-sm font-medium text-gray-500">Total Sales</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {orderHistory.map((order) => (
-                          <React.Fragment key={order.id}>
-                            <tr className="bg-gray-50">
-                              <td colSpan={4} className="px-2 py-2 text-sm font-medium text-gray-700">
-                                {order.order_number} - {order.date}
-                              </td>
-                            </tr>
-                            {order.items.map((item, idx) => (
-                              <tr key={`${order.id}-${idx}`} className="border-b border-gray-100">
-                                <td className="px-2 py-2 text-sm text-gray-900">{item.productName}</td>
-                                <td className="px-2 py-2 text-sm text-gray-900">{item.quantity}</td>
-                                <td className="px-2 py-2 text-sm text-gray-900">
-                                  ₱{item.unitPrice.toLocaleString()}
-                                </td>
-                                <td className="px-2 py-2 text-sm text-gray-900">
-                                  ₱{item.total.toLocaleString()}
-                                </td>
-                              </tr>
-                            ))}
-                          </React.Fragment>
-                        ))}
                         {orderHistory.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                            <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
                               No past orders for this customer
                             </td>
                           </tr>
                         )}
+
+                        {orderHistory.map((order) => (
+                          <React.Fragment key={order.id}>
+                            {/* Collapsible Header Row */}
+                            <tr
+                              onClick={() =>
+                                setExpandedOrder((prev) => (prev === order.id ? null : order.id))
+                              }
+                              className="cursor-pointer hover:bg-gray-50 border-b border-gray-200"
+                            >
+                              <td className="px-2 py-2 text-sm font-medium text-gray-900">
+                                {order.order_number}
+                              </td>
+                              <td className="px-2 py-2 text-sm text-gray-700">{order.date}</td>
+                              <td className="px-2 py-2 text-sm text-gray-700">
+                                ₱
+                                {order.items
+                                  .reduce((sum, item) => sum + item.total, 0)
+                                  .toLocaleString()}
+                              </td>
+                            </tr>
+
+                            {/* Expanded Details */}
+                            {expandedOrder === order.id && (
+                              <tr className="bg-gray-50">
+                                <td colSpan={3} className="px-2 py-2">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-gray-200">
+                                        <th className="text-left py-1 px-2 text-gray-600">Item</th>
+                                        <th className="text-left py-1 px-2 text-gray-600">Quantity</th>
+                                        <th className="text-left py-1 px-2 text-gray-600">Unit Price</th>
+                                        <th className="text-left py-1 px-2 text-gray-600">Total</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {order.items.map((item, idx) => (
+                                        <tr key={idx} className="border-b border-gray-100">
+                                          <td className="py-1 px-2 text-gray-800">{item.productName}</td>
+                                          <td className="py-1 px-2 text-gray-800">{item.quantity}</td>
+                                          <td className="py-1 px-2 text-gray-800">
+                                            ₱{item.unitPrice.toLocaleString()}
+                                          </td>
+                                          <td className="py-1 px-2 text-gray-800">
+                                            ₱{item.total.toLocaleString()}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
                       </tbody>
                     </table>
                   </div>
                 </CardContent>
               </Card>
+
             </div>
           )}
         </ScrollArea>
