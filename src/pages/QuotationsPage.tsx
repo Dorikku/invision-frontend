@@ -257,7 +257,7 @@ export default function QuotationsPage() {
       key: 'total',
       label: 'Total',
       sortable: true,
-      render: (value: number) => `₱ ${Number(value).toFixed(2)}`,
+      render: (value: number) => `₱ ${Number(value).toLocaleString()}`,
     },
     {
       key: 'status',

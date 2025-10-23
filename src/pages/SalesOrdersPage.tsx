@@ -315,7 +315,7 @@ const handlePrintDeliveryReceipt = async (order: SalesOrder) => {
       key: 'total',
       label: 'Total',
       sortable: true,
-      render: (value: number) => `₱ ${value.toFixed(2)}`,
+      render: (value: number) => `₱ ${value.toLocaleString()}`,
     },
     {
       key: 'invoiceStatus',

@@ -302,7 +302,7 @@ export default function ProductsPage() {
             <CardTitle className="text-sm font-medium">Inventory Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₱{totalInventoryValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₱{totalInventoryValue.toLocaleString()}</div>
           </CardContent>
         </Card>
       </div>
