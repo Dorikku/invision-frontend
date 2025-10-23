@@ -13,7 +13,7 @@ interface PrintableInvoiceProps {
     registrationNumber?: string;
   };
   title?: string;
-  mode?: 'invoice' | 'delivery';
+  mode?: 'invoice' | 'delivery' | 'quotation' | 'sales-order' | 'purchase-order';
 }
 
 const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
@@ -127,7 +127,7 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
                   <div className="text-lg font-semibold">#{invoice.invoiceNumber}</div>
                   <div className="text-sm text-gray-600">
                     <div>Date: {formatDate(invoice.date)}</div>
-                    {mode !== "delivery" && invoice.dueDate && (
+                    {mode === "invoice" && invoice.dueDate && (
                       <div>Due Date: {formatDate(invoice.dueDate)}</div>
                     )}
                   </div>
@@ -150,7 +150,11 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
           {/* Billing Information */}
           <div className="mb-8 grid grid-cols-2 gap-8">
             <div>
-              <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Bill To:</h3>
+                {mode === "purchase-order" ? (
+                  <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">PO For:</h3>
+                ) : (
+                  <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Bill To:</h3>
+                )}
               <div className="text-sm text-gray-700 space-y-1">
                 <div className="font-semibold text-base">{invoice.customerName}</div>
                 {(invoice.billingAddress || invoice.customerAddress) && (
@@ -238,7 +242,7 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
 
                 <div className="flex justify-between py-3 border-t-2 border-gray-800">
                   <span className="text-lg font-bold text-gray-900">
-                    {mode === "delivery" ? "Total Amount" : "Total Due"}
+                    {mode === "invoice" ? "Total Due" : "Total Amount"}
                   </span>
                   <span className="text-lg font-bold text-gray-900">{formatCurrency(invoice.total || 0)}</span>
                 </div>
@@ -263,7 +267,24 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
           </div>
 
           {/* Footer */}
-          {mode === "invoice" ? (
+          {mode === "delivery" ? (
+            <div className="mt-16 pt-8 border-t border-gray-300">
+              <div className="grid grid-cols-2 gap-8 text-sm text-gray-700">
+                <div>
+                  <div className="mb-10">
+                    <div className="font-medium mb-8">Delivered By:</div>
+                    <div className="border-t border-gray-400 w-48"></div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="mb-10">
+                    <div className="font-medium mb-8">Received By:</div>
+                    <div className="border-t border-gray-400 w-48 ml-auto"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
             <div className="mt-16 pt-8 border-t border-gray-300">
               <div className="grid grid-cols-2 gap-8">
                 <div>
@@ -277,23 +298,6 @@ const PrintableInvoice = forwardRef<HTMLDivElement, PrintableInvoiceProps>(
                     <div>Thank you for your business!</div>
                     <div className="mt-2">For questions, please contact our billing department</div>
                     <div>{company.email} | {company.phone}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-16 pt-8 border-t border-gray-300">
-              <div className="grid grid-cols-2 gap-8 text-sm text-gray-700">
-                <div>
-                  <div className="mb-10">
-                    <div className="font-medium mb-8">Delivered By:</div>
-                    <div className="border-t border-gray-400 w-48"></div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="mb-10">
-                    <div className="font-medium mb-8">Received By:</div>
-                    <div className="border-t border-gray-400 w-48 ml-auto"></div>
                   </div>
                 </div>
               </div>

@@ -6,6 +6,12 @@ import { Separator } from '../../components/ui/separator';
 import { Edit, Download, Send, XCircle, CheckCircle } from 'lucide-react';
 import type { Quotation } from '../../types';
 import { useAuth } from "../../auth/AuthContext";
+import { useState, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
+import PrintableInvoice from '../../components/prints/PrintableInvoice';
+import { useReactToPrint } from 'react-to-print';
+import { toast } from '../../components/ui/sonner';
+
 
 
 interface QuotationViewProps {
@@ -19,6 +25,9 @@ interface QuotationViewProps {
 export default function QuotationView({ quotation, onClose, onEdit, onAccept, onReject }: QuotationViewProps) {
   const { user } = useAuth(); // ✅ get current user
   const isSales = user?.role === "Sales"; // ✅ check role
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -31,8 +40,18 @@ export default function QuotationView({ quotation, onClose, onEdit, onAccept, on
   };
 
   const handlePrint = () => {
-    window.print();
+    setIsPrintDialogOpen(true);
   };
+
+  const handlePrintExecute = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Quotation-${quotation.quotationNumber}`,
+    onAfterPrint: () => {
+      setIsPrintDialogOpen(false);
+      toast.success('Quotation printed successfully');
+    },
+  });
+
 
   return (
     <div className="space-y-6">
@@ -198,6 +217,54 @@ export default function QuotationView({ quotation, onClose, onEdit, onAccept, on
           Close
         </Button>
       </div>
+
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Print Quotation</DialogTitle>
+            <DialogDescription>Preview before printing</DialogDescription>
+          </DialogHeader>
+
+          <div className="mb-4 flex justify-end space-x-2 no-print">
+            <Button onClick={handlePrintExecute}>
+              <Download className="mr-2 h-4 w-4" />
+              Print Quotation
+            </Button>
+            <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+
+          <div className="border rounded-lg">
+            <PrintableInvoice
+              ref={printRef}
+              title="QUOTATION"
+              mode="quotation"
+              invoice={{
+                ...quotation,
+                invoiceNumber: quotation.quotationNumber,
+                date: quotation.date,
+                dueDate: quotation.validUntil || quotation.date,
+                items: quotation.items,
+                total: quotation.total,
+                customerName: quotation.customerName,
+                customerAddress: quotation.customerAddress,
+                customerEmail: quotation.customerEmail,
+                notes: quotation.notes,
+              }}
+              companyInfo={{
+                name: 'PENTAMAX ELECTRICAL SUPPLY',
+                address: 'Arty 1 Subd. Brgy. Talipapa Novaliches Quezon City',
+                phone: '0916 453 8406',
+                email: 'pentamaxelectrical@gmail.com',
+                registrationNumber: '314-359-848-00000',
+                logo: '3.png',
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

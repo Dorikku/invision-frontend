@@ -36,6 +36,8 @@ export default function SalesOrderView({
   const [printData, setPrintData] = useState<any>(null);
   const { user } = useAuth(); // ✅ get current user
   const isSales = user?.role === "Sales"; // ✅ check role
+  const [printTitle, setPrintTitle] = useState("SALES ORDER");
+
 
   const getInvoiceStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -77,18 +79,16 @@ export default function SalesOrderView({
   };
 
   const handlePrintDeliveryReceipt = (order: SalesOrder) => {
+    setPrintTitle("DELIVERY RECEIPT");
     setPrintData(order);
     setIsPrintDialogOpen(true);
   };
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: `DeliveryReceipt-${salesOrder.orderNumber}`,
-    onAfterPrint: () => {
-      setIsPrintDialogOpen(false);
-      toast.success('Delivery receipt printed successfully');
-    },
-  });
+  const handlePrint = (order: SalesOrder) => {
+    setPrintTitle("SALES ORDER");
+    setPrintData(order);
+    setIsPrintDialogOpen(true);
+  };
 
   const formatStatusText = (status: string) => {
     return status
@@ -128,7 +128,7 @@ export default function SalesOrderView({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrint}>
+          <Button variant="outline" size="sm" onClick={() => handlePrint(salesOrder)}>
             <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>
@@ -392,7 +392,7 @@ export default function SalesOrderView({
           {printData && (
             <div>
               <div className="mb-4 flex justify-end space-x-2 no-print">
-                <Button onClick={handlePrint}>
+                <Button onClick={() => handlePrint(salesOrder)}>
                   <Printer className="mr-2 h-4 w-4" /> Print Receipt
                 </Button>
                 <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>
@@ -403,8 +403,8 @@ export default function SalesOrderView({
               <div className="border rounded-lg">
                 <PrintableInvoice
                   ref={printRef}
-                  title="DELIVERY RECEIPT"
-                  mode="delivery"
+                  title={printTitle}
+                  mode={printTitle === "DELIVERY RECEIPT" ? "delivery" : "sales-order"}
                   invoice={{
                     ...printData,
                     invoiceNumber: printData.orderNumber,

@@ -6,6 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Edit, Printer, Mail, Package, CircleX } from 'lucide-react';
 import type { PurchaseOrder } from '../../types';
 import { useAuth } from "../../auth/AuthContext";
+import { useState, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
+import PrintableInvoice from '../../components/prints/PrintableInvoice';
+import { useReactToPrint } from 'react-to-print';
+import { toast } from '../../components/ui/sonner';
+
 
 
 interface PurchaseOrderViewProps {
@@ -23,6 +29,9 @@ export default function PurchaseOrderView({
 }: PurchaseOrderViewProps) {
   const { user } = useAuth(); // ✅ get current user
   const isSales = user?.role === "Sales"; // ✅ check role
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
 
 
   const getStatusBadgeVariant = (status: string) => {
@@ -50,8 +59,18 @@ export default function PurchaseOrderView({
   };
 
   const handlePrint = () => {
-    window.print();
+    setIsPrintDialogOpen(true);
   };
+
+  const handlePrintExecute = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `PurchaseOrder-${purchaseOrder.poNumber}`,
+    onAfterPrint: () => {
+      setIsPrintDialogOpen(false);
+      toast.success('Purchase order printed successfully');
+    },
+  });
+
 
   const handleSendEmail = () => {
     alert('Email functionality would be implemented here');
@@ -224,6 +243,55 @@ export default function PurchaseOrderView({
           Close
         </Button>
       </div>
+
+      <Dialog open={isPrintDialogOpen} onOpenChange={setIsPrintDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Print Purchase Order</DialogTitle>
+            <DialogDescription>Preview before printing</DialogDescription>
+          </DialogHeader>
+
+          <div className="mb-4 flex justify-end space-x-2 no-print">
+            <Button onClick={handlePrintExecute}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print Purchase Order
+            </Button>
+            <Button variant="outline" onClick={() => setIsPrintDialogOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+
+          <div className="border rounded-lg">
+            <PrintableInvoice
+              ref={printRef}
+              title="PURCHASE ORDER"
+              mode="purchase-order"
+              invoice={{
+                ...purchaseOrder,
+                invoiceNumber: purchaseOrder.poNumber,
+                date: purchaseOrder.date,
+                dueDate: purchaseOrder.expectedDeliveryDate || purchaseOrder.date,
+                items: purchaseOrder.items.map((item) => ({
+                  productName: item.productName,
+                  description: item.description,
+                  quantity: item.quantityOrdered,
+                  unitPrice: item.unitPrice,
+                  taxRate: item.taxRate,
+                  total: item.lineTotal,
+                })),
+                total: purchaseOrder.total,
+                subtotal: purchaseOrder.subtotal,
+                tax: purchaseOrder.tax,
+                customerName: purchaseOrder.supplierName,
+                customerAddress: purchaseOrder.supplierAddress,
+                customerEmail: purchaseOrder.supplierEmail,
+                notes: purchaseOrder.notes,
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
