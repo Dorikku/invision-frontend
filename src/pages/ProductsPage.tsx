@@ -13,6 +13,8 @@ import ProductView from '../components/views/ProductView';
 import { ImageOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import ProductsForm from '@/components/forms/ProductForm';
+import { useAuth } from "../auth/AuthContext";
+
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,6 +27,8 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const API_URL = import.meta.env.VITE_API_URL;
+  const { user } = useAuth(); // 👈 Get logged-in user
+  const isSales = user?.role === "Sales"; // 👈 Check if role is "Sales"
 
   useEffect(() => {
     loadCategories();
@@ -185,6 +189,16 @@ export default function ProductsPage() {
     },
   ];
 
+  if (!isSales) {
+    columns.push({
+      key: 'actions',
+      label: 'Actions',
+      sortable: false, // 👈 explicitly set
+      render: (_: any, product: Product) => getActionItems(product),
+    });
+  }
+
+
   const filteredProducts = categoryFilter === 'all'
     ? products
     : products.filter(p => p.category_id?.toString() === categoryFilter);
@@ -194,11 +208,14 @@ export default function ProductsPage() {
     0
   );
 
-  const getActionItems = (product: Product) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  const getActionItems = (product: Product) => {
+    if (isSales) return null; // 👈 Hide actions for Sales role
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="inline-flex justify-center items-center w-7 h-7 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-200 focus:outline-none">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 12h.01M12 12h.01M19 12h.01" />
           </svg>
         </Button>
@@ -229,7 +246,8 @@ export default function ProductsPage() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -257,14 +275,18 @@ export default function ProductsPage() {
           <p className="text-muted-foreground">Manage your product inventory</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button onClick={handleCreateProduct}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Product
-          </Button>
+          {!isSales && ( 
+            <>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+              <Button onClick={handleCreateProduct}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Product
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -344,7 +366,7 @@ export default function ProductsPage() {
             columns={columns}
             searchTerm={searchTerm}          // 👈 controlled search
             onRowClick={handleViewProduct}
-            actions={getActionItems}
+            // actions={getActionItems}
           />
         </CardContent>
       </Card>

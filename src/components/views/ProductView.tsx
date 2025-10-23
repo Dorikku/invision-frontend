@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Separator } from '../../components/ui/separator';
 import { Edit } from 'lucide-react';
 import type { Product } from '../../types';
+import { useAuth } from "../../auth/AuthContext";
+
 
 interface ProductViewProps {
   product: Product;
@@ -11,6 +13,9 @@ interface ProductViewProps {
 }
 
 export default function ProductView({ product, onClose, onEdit }: ProductViewProps) {
+  const { user } = useAuth(); // ✅ get current user
+  const isSales = user?.role === "Sales"; // ✅ check role
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -19,10 +24,12 @@ export default function ProductView({ product, onClose, onEdit }: ProductViewPro
           <p className="text-muted-foreground">SKU: {product.sku}</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={onEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
+          {!isSales && (  
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
         </div>
       </div>
 
