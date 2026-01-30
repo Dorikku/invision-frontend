@@ -53,7 +53,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <AuthProvider>
-          <BrowserRouter basename="/"> 
+          <BrowserRouter basename="/invision-frontend/"> 
             <Routes>
               {/* ---------- PUBLIC ROUTES ---------- */}
               <Route path="/register" element={<Register />} />
@@ -66,7 +66,7 @@ const App = () => {
               <Route
                 path="/*"
                 element={
-                  <ProtectedRoute allowedRoles={['Admin', 'Secretary', 'Sales']}>
+                  <ProtectedRoute allowedRoles={['Super_admin', 'Admin', 'Secretary', 'Sales']}>
                     <div className="flex h-screen bg-gray-50">
                       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
                       <div className="flex flex-1 flex-col overflow-hidden lg:ml-0">
@@ -93,7 +93,7 @@ const App = () => {
                               <Route
                                 path="/users"
                                 element={
-                                  <ProtectedRoute allowedRoles={['Admin']}>
+                                  <ProtectedRoute allowedRoles={['Admin', 'Super_admin']}>
                                     <UsersPage />
                                   </ProtectedRoute>
                                 }
