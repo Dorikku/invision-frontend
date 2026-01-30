@@ -11,6 +11,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // base: "/invision-frontend/",
-  base: "/",
+  base: "/invision-frontend/",
+  // base: "/",
 })
